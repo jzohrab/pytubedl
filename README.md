@@ -1,5 +1,12 @@
-# Python YouTube downloader
+# Python YouTube downloader and backchainer
 
+Download youtube files, and after breaking them up, use backchaining to work on sentence pronunciation.
+
+# Dependencies
+
+python3
+ffmpeg
+For mac: `brew install ffmpeg`
 
 # Starting up and shutting down
 
@@ -15,14 +22,15 @@ source .venv/bin/activate
 deactivate
 ```
 
+# Downloading videos
+
+Useful when you need to go offline, or just save bandwidth.
 
 ## Queue file
 
-Create a queue file with URLs that you want to download, eg, `queue.txt`:
+Create a queue file with YouTube URLs that you want to download, eg, `queue.txt` (lines starting with # are ignored):
 
 ```
-## Lines starting with # are ignored
-
 # Jorge B ansiedad meditacion
 https://www.youtube.com/watch?v=cgvR03wrolY
 
@@ -52,3 +60,12 @@ Set `ENV=TEST` to use a fake downloader, e.g:
 ENV=TEST python3 pytubedl/download.py queue.txt a
 ```
 
+# Backchaining
+
+Given a short audio file, play a small piece at the end, then gradually build on top of that.
+
+```
+python3 pytubedl/backchain.py ~/Downloads/hack-01.mp3
+```
+
+Command-line-only, it's all work-in-progress.
