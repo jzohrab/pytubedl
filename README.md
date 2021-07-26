@@ -2,11 +2,20 @@
 
 Download youtube files, and after breaking them up, use backchaining to work on sentence pronunciation.
 
+This uses [Vosk](https://github.com/alphacep/vosk-api) for offline audio transcription.  You have to install a model for the language you want (see https://alphacephei.com/vosk/models) -- unfortunately only a few languages are supported at the moment.
+
 # Dependencies
 
-python3
-ffmpeg
-For mac: `brew install ffmpeg`
+* python3
+* ffmpeg (For mac: `brew install ffmpeg`)
+* vosk model (see below for spanish)
+
+```
+# Spanish - this must be installed in a directory called 'model' in the project root.
+wget https://alphacephei.com/vosk/models/vosk-model-small-es-0.3.zip
+unzip vosk-model-small-es-0.3.zip 
+mv vosk-model-small-es-0.3 model
+```
 
 # Starting up and shutting down
 

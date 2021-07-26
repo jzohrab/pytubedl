@@ -4,6 +4,10 @@
 # Downloaded files
 downloads/
 
+# Ignores for vosk:
+*.zip
+model/
+
 bin/
 
 # Byte-compiled / optimized / DLL files

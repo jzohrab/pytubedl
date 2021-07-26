@@ -1,6 +1,7 @@
 boto3==1.12.21
 botocore==1.15.21
 certifi==2019.11.28
+cffi==1.14.6
 charset-normalizer==2.0.3
 coverage==5.5
 decorator==4.4.2
@@ -19,6 +20,7 @@ packaging==21.0
 Pillow==8.3.1
 proglog==0.1.9
 pycountry==19.8.18
+pycparser==2.20
 pydub==0.25.1
 pyjsparser==2.7.1
 pyparsing==2.4.7
@@ -33,3 +35,4 @@ tqdm==4.61.2
 -e git+https://github.com/jzohrab/tube_dl.git@7e25105f26cf1572a2656134ace541a1920e88fb#egg=tube_dl
 tzlocal==2.1
 urllib3==1.25.8
+vosk==0.3.30
