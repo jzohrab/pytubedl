@@ -2,7 +2,7 @@ import sys
 import os
 from pydub import AudioSegment
 from pydub.playback import play
-
+from vosk_transcription import transcribe
 
 if len(sys.argv) < 2:
     print('Missing file argument')
@@ -105,9 +105,15 @@ l OR n         play current link (start of clip)
 > OR . OR f    move forward (shorter clip)
 i              print info
 z OR s         set chain link size
+t              print file transcription
 q              quit
 ?              help
 """)
+
+def print_transcription():
+    s = transcribe(f, showDots=True)
+    print()
+    print(s)
 
 commands = {
     '': play_clip,
@@ -124,6 +130,7 @@ commands = {
     'z': set_link_size,
     's': set_link_size,
     '?': print_commands,
+    't': print_transcription,
     'q': noop
 }
 
