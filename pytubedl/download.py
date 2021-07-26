@@ -1,7 +1,7 @@
 from tube_dl import Youtube, extras
 import os
 import sys
-
+import re
 
 class YouTubeDownloader:
     """Actual downloader."""
@@ -32,13 +32,22 @@ class FakeDownloader:
     def download_audio(self, url):
         return self.writefile('somefile here.mp3', url)
 
-print("downloading videos listed in " + str(sys.argv[1]))
-f = open(sys.argv[1], "r")
-lines = [
-    s for s in
-    [ s.strip() for s in f.readlines() ]
-    if not s.startswith('#') and s != ''
-]
+def get_youtube_url_list(filename):
+    """Gets urls"""
+    f = open(filename, "r")
+    lines = [
+        s for s in
+        [ s.strip() for s in f.readlines() ]
+        if not s.startswith('#') and s != ''
+    ]
+    allcontent = '\n'.join(lines)
+    youtubere = r'https\:\/\/.*youtube.com/watch\?v=...........'
+    youtube_urls = re.findall(youtubere, allcontent)
+    return youtube_urls
+
+filename = str(sys.argv[1])
+print("downloading videos listed in " + filename)
+lines = get_youtube_url_list(filename)
 
 saveas = str(sys.argv[2])
 if (saveas != 'a' and saveas != 'v'):
