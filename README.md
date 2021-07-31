@@ -69,6 +69,16 @@ Set `ENV=TEST` to use a fake downloader, e.g:
 ENV=TEST python3 pytubedl/download.py queue.txt a
 ```
 
+# Split a file into chunks
+
+Use `splitaudio.py`, e.g.:
+
+```
+python pytubedl/splitaudio.py path/to/your.mp3
+```
+
+This creates `chunk_00x.mp3` files in a subdirectory with the same name as the file (e.g., `path/to/your/chunk_001.mp3`).
+
 # Backchaining
 
 Given a short audio file, play a small piece at the end, then gradually build on top of that.
