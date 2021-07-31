@@ -3,33 +3,53 @@ import os
 from pydub import AudioSegment
 from pydub.playback import play
 from vosk_transcription import transcribe
+import math
 
 if len(sys.argv) < 2:
     print('Missing file argument(s)')
     sys.exit(1)
 
-currfile = sys.argv[1]
-errmsg = None
-if currfile is None:
-    errmsg = 'Missing file argument'
-if not os.path.exists(currfile):
-    errmsg = ('Missing file ' + currfile)
-if not currfile.endswith('.mp3'):
-    errmsg = 'File must be .mp3'
-
-if errmsg:
-    print(errmsg)
-    sys.exit(1)
-
-song = AudioSegment.from_mp3(currfile)
-duration_ms = song.duration_seconds * 1000
-
+files = sys.argv[1:]
+currfilenum = 0
+currfile = None
+song = None
+duration_ms = 0
 chain_link_size = 2000
+curr_pos_ms = 0
 
-# User will start listening to the clip at position curr_pos, and
-# increases curr_pos until it is equal to duration (i.e., is playing
-# the entire clip).
-curr_pos_ms = min(chain_link_size, duration_ms)
+def load_curr_song():
+    global song
+    global duration_ms
+    global currfile
+    global curr_pos_ms
+    currfile = files[currfilenum]
+    errmsg = None
+    if currfile is None:
+        errmsg = 'Missing file argument'
+    if not os.path.exists(currfile):
+        errmsg = ('Missing file ' + currfile)
+    if not currfile.endswith('.mp3'):
+        errmsg = 'File must be .mp3'
+    if errmsg:
+        print(errmsg)
+        sys.exit(1)
+
+    song = AudioSegment.from_mp3(currfile)
+    duration_ms = song.duration_seconds * 1000
+
+    # User will start listening to the clip at position curr_pos, and
+    # increases curr_pos until it is equal to duration (i.e., is playing
+    # the entire clip).
+    curr_pos_ms = min(chain_link_size, duration_ms)
+
+def next_song():
+    global currfilenum
+    currfilenum += 1
+    if currfilenum > (len(files) + 1):
+        print("All done.")
+        sys.exit(0)
+    load_curr_song()
+    play(song)
 
 def print_cursor():
     print(f"{curr_pos_ms / 1000} of {duration_ms / 1000}")
@@ -45,9 +65,9 @@ def play_full():
     play(song)
 
 def play_link():
-    print(f'play from {curr_pos_ms} for {chain_link_size * 2 / 1000} s')
+    print(f'play from {curr_pos_ms} for {chain_link_size * 1.5 / 1000} s')
     start = -1 * curr_pos_ms
-    end = -1 * curr_pos_ms + (2 * chain_link_size)
+    end = -1 * curr_pos_ms + math.floor(1.5 * chain_link_size)
     if end >= 0:
         end = -1
     curr = song[start:end]
@@ -84,10 +104,9 @@ def forward():
 
 def print_stats():
     print(f"""
+file:           {currfile}
 duration (ms):  {duration_ms}
 current (ms):   {curr_pos_ms}
-link size (ms): {chain_link_size}
-filename:       {currfile}
 """)
 
 def unknown():
@@ -99,13 +118,14 @@ def noop():
 def print_commands():
     print("""
 <nothing>      play clip starting at current position
-p              play full clip
-l OR n         play current link (start of clip)
-< OR , OR b    move back (longer clip)
-> OR . OR f    move forward (shorter clip)
+r              replay full clip
+l              play current link (start of clip)
+< OR , OR b    move back (longer chain)
+> OR . OR f    move forward (shorter chain)
 i              print info
 z OR s         set chain link size
-t              print file transcription
+t              print clip transcription
+n              move to next clip
 q              quit
 ?              help
 """)
@@ -117,9 +137,9 @@ def print_transcription():
 
 commands = {
     '': play_clip,
-    'p': play_full,
+    'r': play_full,
     'l': play_link,
-    'n': play_link,
+    'n': next_song,
     '<': back,
     ',': back,
     'b': back,
@@ -133,6 +153,11 @@ commands = {
     't': print_transcription,
     'q': noop
 }
+
+######
+# Main
+
+load_curr_song()
 
 print_commands()
 
