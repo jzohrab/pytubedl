@@ -5,23 +5,23 @@ from pydub.playback import play
 from vosk_transcription import transcribe
 
 if len(sys.argv) < 2:
-    print('Missing file argument')
+    print('Missing file argument(s)')
     sys.exit(1)
 
-f = sys.argv[1]
+currfile = sys.argv[1]
 errmsg = None
-if f is None:
+if currfile is None:
     errmsg = 'Missing file argument'
-if not os.path.exists(f):
-    errmsg = ('Missing file ' + f)
-if not f.endswith('.mp3'):
+if not os.path.exists(currfile):
+    errmsg = ('Missing file ' + currfile)
+if not currfile.endswith('.mp3'):
     errmsg = 'File must be .mp3'
 
 if errmsg:
     print(errmsg)
     sys.exit(1)
 
-song = AudioSegment.from_mp3(f)
+song = AudioSegment.from_mp3(currfile)
 duration_ms = song.duration_seconds * 1000
 
 chain_link_size = 2000
@@ -87,7 +87,7 @@ def print_stats():
 duration (ms):  {duration_ms}
 current (ms):   {curr_pos_ms}
 link size (ms): {chain_link_size}
-filename:       {f}
+filename:       {currfile}
 """)
 
 def unknown():
@@ -111,7 +111,7 @@ q              quit
 """)
 
 def print_transcription():
-    s = transcribe(f, showDots=True)
+    s = transcribe(currfile, showDots=True)
     print()
     print(s)
 
