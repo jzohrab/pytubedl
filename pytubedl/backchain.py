@@ -78,7 +78,7 @@ def back():
     curr_pos_ms += 2000
     curr_pos_ms = min(curr_pos_ms, duration_ms)
     print_cursor()
-    play_clip()
+    play_link()
 
 def set_link_size():
     """Set the size of the increment.  Not doing much error handling,
