@@ -17,6 +17,29 @@ unzip vosk-model-small-es-0.3.zip
 mv vosk-model-small-es-0.3 model
 ```
 
+# TODO - some sort-of-polishing
+
+General idea:
+
+* given an audio file
+* load it, split it into chunks, not writing individual files out b/c that takes time
+* configurable params: min chunk length, min db, silence length
+* start loop, similar to existing backchaining loop.
+
+Loop:
+
+* play current chunk
+* r replays current
+* n = move to next, and play it (return does the same)
+* p = move to prev and play it
+* j = join current chunk w/ previous
+* u = "unjoin" current chunk into components
+* x = export current chunk and transcription to AnkiConnect
+* t = transcribe
+
+* b = enter backchaining sub-loop, similar to existing thing
+
+
 # Starting up and shutting down
 
 ```
@@ -50,3 +73,4 @@ python3 pytubedl/backchain.py ~/Downloads/hack-01.mp3
 ```
 
 Command-line-only, it's all work-in-progress.
+
