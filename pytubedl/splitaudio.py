@@ -42,7 +42,7 @@ os.mkdir(dirname)
 
 # Load your audio.
 print('loading song ...')
-song = AudioSegment.from_mp3("downloads/hack.mp3")
+song = AudioSegment.from_mp3(f)
 
 print('splitting on silence ...')
 # Split track
@@ -58,17 +58,17 @@ chunks = split_on_silence (
     # "silence" is anything quieter than -30 dBFS.
     silence_thresh = -30,
     # silence must be at least 1000 ms long
-    min_silence_len = 1000
+    min_silence_len = 500
 )
 
+
+# Create a silence chunk that's 0.5 seconds (or 500 ms) long for padding.
+silence_chunk = AudioSegment.silent(duration=500)
 
 # Process each chunk
 print('Creating files ...')
 maxlen = len(str(len(chunks)))
 for i, chunk in enumerate(chunks):
-    # Create a silence chunk that's 0.5 seconds (or 500 ms) long for padding.
-    silence_chunk = AudioSegment.silent(duration=500)
-
     # Add the padding chunk to beginning and end of the entire chunk.
     audio_chunk = silence_chunk + chunk + silence_chunk
 
