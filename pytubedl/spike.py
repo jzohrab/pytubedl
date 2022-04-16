@@ -23,6 +23,7 @@ from vosk import Model, KaldiRecognizer, SetLogLevel
 import sys
 import os
 import wave
+import json
 
 SetLogLevel(-1)
 
@@ -39,18 +40,22 @@ def transcribe_wav(f):
     model = Model("model")
     rec = KaldiRecognizer(model, wf.getframerate())
     rec.SetWords(True)
-    rec.SetPartialWords(True)
+    # rec.SetPartialWords(True)
 
     while True:
         data = wf.readframes(4000)
+        print('.', end='', flush=True)
         if len(data) == 0:
             break
-        if rec.AcceptWaveform(data):
-            print(rec.Result())
-        else:
-            print(rec.PartialResult())
+        rec.AcceptWaveform(data)
+        # if rec.AcceptWaveform(data):
+        #     print(rec.Result())
+        # else:
+        #     print(rec.PartialResult())
 
-    print(rec.FinalResult())
+    print()
+    result = json.loads(rec.FinalResult())
+    print(result.get('text'))
     wf.close()
 
 ######################
