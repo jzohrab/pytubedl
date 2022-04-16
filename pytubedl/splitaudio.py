@@ -62,6 +62,15 @@ chunks = split_on_silence (
     min_silence_len = 1000
 )
 
+# chunks = chunks[:20]
+
+# Get lengths
+for i, chunk in enumerate(chunks):
+    print(f"  {i} : {chunk.duration_seconds}")
+
+# print("QUITTING")
+# sys.exit()
+
 # Silence chunk for padding, in ms.
 silence_chunk = AudioSegment.silent(duration=250)
 
