@@ -1,6 +1,6 @@
-# Python YouTube downloader and backchainer
+# Python backchainer
 
-Download youtube files, and after breaking them up, use backchaining to work on sentence pronunciation.
+Utils to break up an audio file, and use backchaining to work on sentence pronunciation.
 
 This uses [Vosk](https://github.com/alphacep/vosk-api) for offline audio transcription.  You have to install a model for the language you want (see https://alphacephei.com/vosk/models) -- unfortunately only a few languages are supported at the moment.
 
@@ -29,44 +29,6 @@ source .venv/bin/activate
 ... work work work OR use use use
 
 deactivate
-```
-
-# Downloading videos
-
-Useful when you need to go offline, or just save bandwidth.
-
-## Queue file
-
-Create a queue file with YouTube URLs that you want to download, eg, `queue.txt` (lines starting with # are ignored):
-
-```
-# Jorge B ansiedad meditacion
-https://www.youtube.com/watch?v=cgvR03wrolY
-
-# Wim Hof guided breathing
-https://www.youtube.com/watch?v=tybOi4hjZFQ
-```
-
-## Usage / Sample call
-
-```
-python3 pytubedl/download.py <queue file> [a|v]
-```
-
-'a' or 'v' for audio or video, e.g.:
-
-```
-python3 pytubedl/download.py queue.txt a
-```
-
-Audio is downloaded, and videos are stored in the "downloads" subfolder.
-
-## Development (faking downloads)
-
-Set `ENV=TEST` to use a fake downloader, e.g:
-
-```
-ENV=TEST python3 pytubedl/download.py queue.txt a
 ```
 
 # Split a file into chunks
