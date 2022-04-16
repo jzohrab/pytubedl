@@ -1,4 +1,6 @@
 cffi==1.15.0
+console==0.9907
+ezenv==0.92
 pycparser==2.21
 pydub==0.25.1
 vosk==0.3.30
