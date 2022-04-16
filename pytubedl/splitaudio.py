@@ -44,6 +44,7 @@ os.mkdir(dirname)
 print('loading song ...')
 song = AudioSegment.from_mp3(f)
 
+# Splitting takes a while ... perhaps background this somehow.
 print('splitting on silence ...')
 # Split track
 chunks = split_on_silence (
@@ -58,12 +59,11 @@ chunks = split_on_silence (
     # "silence" is anything quieter than -30 dBFS.
     silence_thresh = -30,
     # silence must be at least 1000 ms long
-    min_silence_len = 500
+    min_silence_len = 1000
 )
 
-
-# Create a silence chunk that's 0.5 seconds (or 500 ms) long for padding.
-silence_chunk = AudioSegment.silent(duration=500)
+# Silence chunk for padding, in ms.
+silence_chunk = AudioSegment.silent(duration=250)
 
 # Process each chunk
 print('Creating files ...')
