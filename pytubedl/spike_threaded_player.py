@@ -17,9 +17,46 @@ import threading
 from multiprocessing import Process, Queue
 import time
 
-class Player:
+
+import multiprocessing as mp
+import collections
+
+Msg = collections.namedtuple('Msg', ['event', 'args'])
+
+# Stolen from https://stackoverflow.com/questions/11515944/how-to-use-multiprocessing-queue-in-python
+class BaseProcess(mp.Process):
+    """A process backed by an internal queue for simple one-way message passing.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queue = mp.Queue()
+
+    def send(self, event, *args):
+        """Puts the event and args as a `Msg` on the queue
+        """
+        msg = Msg(event, args)
+        self.queue.put(msg)
+
+    def dispatch(self, msg):
+        event, args = msg
+
+        handler = getattr(self, "do_%s" % event, None)
+        if not handler:
+            raise NotImplementedError("Process has no handler for [%s]" % event)
+
+        handler(*args)
+
+    def run(self):
+        while True:
+            msg = self.queue.get()
+            self.dispatch(msg)
+
+
+class Player(BaseProcess):
 
     def __init__(self, chunks):
+        super().__init__()
+        # self._closed = False
         self.chunks = chunks
         self.maxindex = len(self.chunks)
         self.index = 0
@@ -37,7 +74,7 @@ class Player:
         if (self.index < self.maxindex):
             self.play()
 
-    def play(self):
+    def do_play(self):
         # Start current chunk on a thread.
         # Calls back when it's done.
         # ??
@@ -53,51 +90,63 @@ class Player:
         if (t == 'q'):
             self.proc.terminate()
 
+
+######################
+# Getting chunks later
+
+def get_chunks():
+
+    f = "downloads/test_split.mp3"
+    print("loading song")
+    song = AudioSegment.from_mp3(f)
+    print("first x seconds")
+    duration = 10 * 1000  # ms
+    song = song[:duration]
+    print("split")
+    
+    # Splitting takes a while ... perhaps background this somehow.
+    print('splitting on silence ...')
+    # Split track
+    chunks = split_on_silence (
+        song, 
+        # check every X ms for silence check ... no need to check every single millisecond
+        seek_step = 50,
+        # Without keep_silence = True, the clips get cut off prematurely.
+        # There appears to be something wrong with the split_on_silence
+        # algorithm (some boundary error), but I haven't bothered to
+        # investigate.
+        keep_silence = True,
+        # "silence" is anything quieter than -30 dBFS.
+        silence_thresh = -30,
+        # silence must be at least 1000 ms long
+        min_silence_len = 1000
+    )
+    
+    # Get lengths
+    for i, chunk in enumerate(chunks):
+        print(f"  {i} : {chunk.duration_seconds}")
+        # playback.play(chunk)
+
+    return chunks
+
 ######################
 # Main
 
-f = "downloads/test_split.mp3"
-print("loading song")
-song = AudioSegment.from_mp3(f)
-print("first x seconds")
-duration = 10 * 1000  # ms
-song = song[:duration]
-print("split")
-
-# Splitting takes a while ... perhaps background this somehow.
-print('splitting on silence ...')
-# Split track
-chunks = split_on_silence (
-    song, 
-    # check every X ms for silence check ... no need to check every single millisecond
-    seek_step = 50,
-    # Without keep_silence = True, the clips get cut off prematurely.
-    # There appears to be something wrong with the split_on_silence
-    # algorithm (some boundary error), but I haven't bothered to
-    # investigate.
-    keep_silence = True,
-    # "silence" is anything quieter than -30 dBFS.
-    silence_thresh = -30,
-    # silence must be at least 1000 ms long
-    min_silence_len = 1000
-)
-
-# Get lengths
-for i, chunk in enumerate(chunks):
-    print(f"  {i} : {chunk.duration_seconds}")
-    # playback.play(chunk)
+chunks = [1,2,3,4,5]
 
 player = Player(chunks)
+player.start()
 
 print("--------------", end = "\r\n")
 print("about to start play", end = "\r\n")
-player.play()
+# player.play()
+player.send('play')
 print("Started play", end = "\r\n")
 
 t = ''
 while t != 'q':
     print('hit any key, q to quit ...')
     t = wait_key()
-    p.gotcommand(t)
+    player.gotcommand(t)
 
 print("exiting program")
