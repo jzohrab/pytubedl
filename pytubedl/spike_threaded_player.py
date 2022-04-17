@@ -14,6 +14,7 @@ from console.utils import wait_key
 # Player
 
 import threading
+from multiprocessing import Process, Queue
 import time
 
 class Player:
@@ -22,16 +23,16 @@ class Player:
         self.chunks = chunks
         self.maxindex = len(self.chunks)
         self.index = 0
-        self.thread = None
+        self.proc = None
 
     def next_thing(self):
-        print("called next_thing")
+        print("called next_thing", end = "\r\n")
         pass
 
     def play_chunk(self):
-        print(f"  playing {self.index}")
+        print(f"  playing {self.index}", end = "\r\n")
         time.sleep(10)
-        print("  done playing")
+        print("  done playing", end = "\r\n")
         self.index += 1
         if (self.index < self.maxindex):
             self.play()
@@ -40,15 +41,17 @@ class Player:
         # Start current chunk on a thread.
         # Calls back when it's done.
         # ??
-        print(f"called play with index = {self.index}")
-        self.thread = threading.Thread(target=self.play_chunk)
-        self.thread.start()
-        print(f"end of call to play with index {self.index}")
+        print(f"called play with index = {self.index}", end = "\r\n")
+        p = Process(target=self.play_chunk)
+        p.daemon = True
+        self.proc = p
+        self.proc.start()
+        print(f"end of call to play with index {self.index}", end = "\r\n")
 
     def gotcommand(self, t):
-        print("got command : " + t)
+        print("got command : " + t, end = "\r\n")
         if (t == 'q'):
-            self.thread.kill()
+            self.proc.terminate()
 
 ######################
 # Main
@@ -84,10 +87,12 @@ for i, chunk in enumerate(chunks):
     print(f"  {i} : {chunk.duration_seconds}")
     # playback.play(chunk)
 
-p = Player(chunks)
-print("about to start play")
-p.play()
-print("Started play")
+player = Player(chunks)
+
+print("--------------", end = "\r\n")
+print("about to start play", end = "\r\n")
+player.play()
+print("Started play", end = "\r\n")
 
 t = ''
 while t != 'q':
