@@ -61,16 +61,20 @@ class Player(BaseProcess):
         self.chunks = chunks
         self.maxindex = len(self.chunks)
         self.index = 0
-        self.proc = None
-
-    def next_thing(self):
-        print("called next_thing", end = "\r\n")
-        pass
 
     def play_chunk(self):
         print(f"  playing  {self.index}", end = "\r\n")
         time.sleep(2)
         print(f"  finished {self.index}", end = "\r\n")
+
+    def do_play(self):
+        # Start current chunk on a thread.
+        # Calls back when it's done.
+        # ??
+        i = self.index
+        print(f"called play with index = {i}", end = "\r\n")
+        self.play_chunk()
+
         if (self.index < self.maxindex - 1):
             # self.do_play()
             self.index += 1
@@ -80,17 +84,6 @@ class Player(BaseProcess):
             # DON'T necessarily quit ... the user might want to backtrack, export the last clip, etc.  Just hang out.
             # self.send('quit')
 
-    def do_play(self):
-        # Start current chunk on a thread.
-        # Calls back when it's done.
-        # ??
-        i = self.index
-        print(f"called play with index = {i}", end = "\r\n")
-        self.play_chunk()
-        # p = Process(target=self.play_chunk)
-        # p.daemon = True
-        # self.proc = p
-        # self.proc.start()
         print(f"end of call to play with index {i}", end = "\r\n")
 
     def do_quit(self):
@@ -103,8 +96,6 @@ class Player(BaseProcess):
     def gotcommand(self, t):
         print("got command : " + t, end = "\r\n")
         if (t == 'q'):
-            if (self.proc is not None):
-                self.proc.terminate()
             self.send('quit')
 
 
@@ -150,7 +141,7 @@ def get_chunks():
 # Main
 
 def main():
-    chunks = [1,2,3,4,5]
+    chunks = [1,2,3]
 
     player = Player(chunks)
     player.start()
