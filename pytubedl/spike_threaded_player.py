@@ -30,6 +30,7 @@ class BaseProcess(mp.Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.queue = mp.Queue()
+        self.is_closed = False
 
     def send(self, event, *args):
         """Puts the event and args as a `Msg` on the queue
@@ -47,7 +48,7 @@ class BaseProcess(mp.Process):
         handler(*args)
 
     def run(self):
-        while True:
+        while not self.is_closed:
             msg = self.queue.get()
             self.dispatch(msg)
 
@@ -67,29 +68,40 @@ class Player(BaseProcess):
         pass
 
     def play_chunk(self):
-        print(f"  playing {self.index}", end = "\r\n")
-        time.sleep(10)
-        print("  done playing", end = "\r\n")
+        print(f"  playing  {self.index}", end = "\r\n")
+        time.sleep(5)
+        print(f"  finished {self.index}", end = "\r\n")
         self.index += 1
         if (self.index < self.maxindex):
-            self.play()
+            # self.do_play()
+            self.send('play')
 
     def do_play(self):
         # Start current chunk on a thread.
         # Calls back when it's done.
         # ??
-        print(f"called play with index = {self.index}", end = "\r\n")
-        p = Process(target=self.play_chunk)
-        p.daemon = True
-        self.proc = p
-        self.proc.start()
-        print(f"end of call to play with index {self.index}", end = "\r\n")
+        i = self.index
+        print(f"called play with index = {i}", end = "\r\n")
+        self.play_chunk()
+        # p = Process(target=self.play_chunk)
+        # p.daemon = True
+        # self.proc = p
+        # self.proc.start()
+        print(f"end of call to play with index {i}", end = "\r\n")
+
+    def do_quit(self):
+        self.is_closed = True
+        print(f"quitting, perhaps need to wait", end = "\r\n")
+        self.queue.close()
+        print(f"done quitting", end = "\r\n")
+        # self.queue.join()
 
     def gotcommand(self, t):
         print("got command : " + t, end = "\r\n")
         if (t == 'q'):
             if (self.proc is not None):
                 self.proc.terminate()
+            self.send('quit')
 
 
 ######################
@@ -151,7 +163,7 @@ def main():
         t = wait_key()
         player.gotcommand(t)
 
-    print("exiting program")
+    print("exiting program ...")
 
 
 if __name__ == "__main__":
