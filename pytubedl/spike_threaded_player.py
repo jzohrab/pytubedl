@@ -88,7 +88,8 @@ class Player(BaseProcess):
     def gotcommand(self, t):
         print("got command : " + t, end = "\r\n")
         if (t == 'q'):
-            self.proc.terminate()
+            if (self.proc is not None):
+                self.proc.terminate()
 
 
 ######################
@@ -132,21 +133,26 @@ def get_chunks():
 ######################
 # Main
 
-chunks = [1,2,3,4,5]
+def main():
+    chunks = [1,2,3,4,5]
 
-player = Player(chunks)
-player.start()
+    player = Player(chunks)
+    player.start()
 
-print("--------------", end = "\r\n")
-print("about to start play", end = "\r\n")
-# player.play()
-player.send('play')
-print("Started play", end = "\r\n")
+    print("--------------", end = "\r\n")
+    print("about to start play", end = "\r\n")
+    # player.play()
+    player.send('play')
+    print("Started play", end = "\r\n")
 
-t = ''
-while t != 'q':
-    print('hit any key, q to quit ...')
-    t = wait_key()
-    player.gotcommand(t)
+    t = ''
+    while t != 'q':
+        print('hit any key, q to quit ...')
+        t = wait_key()
+        player.gotcommand(t)
 
-print("exiting program")
+    print("exiting program")
+
+
+if __name__ == "__main__":
+    main()
