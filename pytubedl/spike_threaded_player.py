@@ -8,6 +8,40 @@ from pydub.silence import split_on_silence
 import os
 import sys
 
+from console.utils import wait_key
+
+######################
+# Player
+
+import threading
+import time
+
+class Player:
+
+    def __init__(self, chunks):
+        self.chunks = chunks
+        self.maxindex = len(self.chunks)
+        self.index = 0
+        self.thread = None
+
+    def next_thing(self):
+        print("called next_thing")
+        pass
+
+    def play_chunk(self):
+        print(f"playing chunk {self.index} for 2 seconds")
+        time.sleep(10)
+        print("done playing")
+
+    def play(self):
+        # Start current chunk on a thread.
+        # Calls back when it's done.
+        # ??
+        self.thread = threading.Thread(target=self.play_chunk)
+        self.thread.start()
+
+    def gotcommand(self, t):
+        print("got command : " + t)
 
 ######################
 # Main
@@ -41,4 +75,17 @@ chunks = split_on_silence (
 # Get lengths
 for i, chunk in enumerate(chunks):
     print(f"  {i} : {chunk.duration_seconds}")
-    playback.play(chunk)
+    # playback.play(chunk)
+
+p = Player(chunks)
+print("about to start play")
+p.play()
+print("Started play")
+
+t = ''
+while t != 'q':
+    print('hit any key, q to quit ...')
+    t = wait_key()
+    p.gotcommand(t)
+
+print("exiting program")
