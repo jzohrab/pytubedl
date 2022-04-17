@@ -71,12 +71,14 @@ class Player(BaseProcess):
         print(f"  playing  {self.index}", end = "\r\n")
         time.sleep(2)
         print(f"  finished {self.index}", end = "\r\n")
-        self.index += 1
-        if (self.index < self.maxindex):
+        if (self.index < self.maxindex - 1):
             # self.do_play()
+            self.index += 1
             self.send('play')
         else:
-            self.send('quit')
+            print("No more chunks.", end = "\r\n")
+            # DON'T necessarily quit ... the user might want to backtrack, export the last clip, etc.  Just hang out.
+            # self.send('quit')
 
     def do_play(self):
         # Start current chunk on a thread.
@@ -168,5 +170,9 @@ def main():
     print("exiting program ...")
 
 
+# Have to do this "__name__ == __main__" check,
+# or python complains with:
+# An attempt has been made to start a new process before the current process has finished its bootstrapping phase.
 if __name__ == "__main__":
     main()
+
