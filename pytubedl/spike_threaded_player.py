@@ -58,6 +58,7 @@ class Player(BaseProcess):
     def __init__(self, chunks):
         super().__init__()
         # self._closed = False
+        self.proc = None
         self.chunks = chunks
         self.maxindex = len(self.chunks)
         self.index = 0
@@ -73,7 +74,15 @@ class Player(BaseProcess):
         # ??
         i = self.index
         print(f"called play with index = {i}", end = "\r\n")
-        self.play_chunk()
+        # self.play_chunk()
+
+        # Start playing chunk in a process, so we can control it.
+        pp = Process(target=self.play_chunk)
+        self.proc = pp
+        print(f"in do_play: got a self.proc? {self.proc is not None}")
+        self.proc.start()
+        self.proc.join()
+        print(f"in do_play: after join(), still got a self.proc? {self.proc is not None}")
 
         if (self.index < self.maxindex - 1):
             # self.do_play()
@@ -93,9 +102,20 @@ class Player(BaseProcess):
         print(f"done quitting", end = "\r\n")
         # self.queue.join()
 
+    def printstats(self):
+        print(f"- Curr index: {self.index}.  count: {self.maxindex}.  Got self.proc? {self.proc is not None}")
+
     def gotcommand(self, t):
         print("got command : " + t, end = "\r\n")
         if (t == 'q'):
+            print("GOT A Q.")
+            self.printstats()
+            if (self.proc is not None):
+                print("- terminating proc right away", end = "\r\n")
+                self.proc.terminate()
+                # self.proc = None
+            else:
+                print("- no proc to quit!!", end = "\r\n")
             self.send('quit')
 
 
@@ -144,18 +164,23 @@ def main():
     chunks = [1,2,3]
 
     player = Player(chunks)
-    player.start()
 
     print("--------------", end = "\r\n")
-    print("about to start play", end = "\r\n")
+    print("about to start()", end = "\r\n")
+    player.start()
+    print("done start()", end = "\r\n")
+
+    print("--------------", end = "\r\n")
+    print("about to send 'play'", end = "\r\n")
     # player.play()
     player.send('play')
-    print("Started play", end = "\r\n")
-
+    print("sent 'play'", end = "\r\n")
+    
     t = ''
-    while t != 'q':
+    while (t != 'q'):
         print('hit any key, q to quit ...')
         t = wait_key()
+        player.printstats()
         player.gotcommand(t)
 
     print("exiting program ...")
