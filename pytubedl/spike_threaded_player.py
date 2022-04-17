@@ -29,19 +29,26 @@ class Player:
         pass
 
     def play_chunk(self):
-        print(f"playing chunk {self.index} for 2 seconds")
+        print(f"  playing {self.index}")
         time.sleep(10)
-        print("done playing")
+        print("  done playing")
+        self.index += 1
+        if (self.index < self.maxindex):
+            self.play()
 
     def play(self):
         # Start current chunk on a thread.
         # Calls back when it's done.
         # ??
+        print(f"called play with index = {self.index}")
         self.thread = threading.Thread(target=self.play_chunk)
         self.thread.start()
+        print(f"end of call to play with index {self.index}")
 
     def gotcommand(self, t):
         print("got command : " + t)
+        if (t == 'q'):
+            self.thread.kill()
 
 ######################
 # Main
