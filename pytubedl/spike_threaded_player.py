@@ -69,12 +69,14 @@ class Player(BaseProcess):
 
     def play_chunk(self):
         print(f"  playing  {self.index}", end = "\r\n")
-        time.sleep(5)
+        time.sleep(2)
         print(f"  finished {self.index}", end = "\r\n")
         self.index += 1
         if (self.index < self.maxindex):
             # self.do_play()
             self.send('play')
+        else:
+            self.send('quit')
 
     def do_play(self):
         # Start current chunk on a thread.
