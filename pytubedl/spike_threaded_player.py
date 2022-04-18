@@ -65,7 +65,8 @@ class Player(BaseProcess):
 
     def play_chunk(self):
         print(f"  playing  {self.index}", end = "\r\n")
-        time.sleep(2)
+        chunk = self.chunks[self.index]
+        playback.play(chunk)
         print(f"  finished {self.index}", end = "\r\n")
 
     def do_play(self):
@@ -120,7 +121,8 @@ class Player(BaseProcess):
 
 
 def main():
-    chunks = [1,2,3]
+    # chunks = ['apple', 'bat', 'cat', 'dog']
+    chunks = get_chunks()
 
     player = Player(chunks)
 
@@ -176,6 +178,16 @@ class ProcessPlayer:
             self.play_current()
             self.index += 1
 
+def mainProcessPlayer():
+    chunks = [1,2,3]
+    pp = ProcessPlayer(chunks)
+    pp.play()
+
+    t = ''
+    while (t != 'q'):
+        print('hit any key, q to quit ...')
+        t = wait_key()
+
 
 ######################
 # Getting chunks later
@@ -217,19 +229,6 @@ def get_chunks():
 
 ######################
 # Main
-
-def mainProcessPlayer():
-    chunks = [1,2,3]
-    pp = ProcessPlayer(chunks)
-    pp.play()
-
-    t = ''
-    while (t != 'q'):
-        print('hit any key, q to quit ...')
-        t = wait_key()
-
-
-
 
 # Have to do this "__name__ == __main__" check,
 # or python complains with:
