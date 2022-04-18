@@ -2,29 +2,22 @@
 # audio of first 10 seconds
 # vosk it
 
-from pydub import AudioSegment
-from pydub import playback
-
-import simpleaudio
-
-from pydub.silence import split_on_silence
+import collections
+import multiprocessing as mp
 import os
+import simpleaudio
 import sys
-
-from console.utils import wait_key
-
-######################
-# Player
-
 import threading
-from multiprocessing import Process, Queue
 import time
 
-
-import multiprocessing as mp
-import collections
+from console.utils import wait_key
+from multiprocessing import Process, Queue
+from pydub import AudioSegment
+from pydub import playback
+from pydub.silence import split_on_silence
 
 Msg = collections.namedtuple('Msg', ['event', 'args'])
+
 
 # Stolen from https://stackoverflow.com/questions/11515944/how-to-use-multiprocessing-queue-in-python
 class BaseProcess(mp.Process):
@@ -136,7 +129,7 @@ class Player(BaseProcess):
             print("- terminating proc right away", end = "\r\n")
             self.proc.terminate()
         else:
-            print("no proc to terminote", end = "\r\n")
+            print("no proc to terminate", end = "\r\n")
         self.send('do_quit')
 
     def printstats(self):
@@ -148,13 +141,9 @@ class Player(BaseProcess):
 
 def get_chunks():
 
-    f = "downloads/test_split.mp3"
+    f = "sample/ten_seconds.mp3"
     print("loading song")
     song = AudioSegment.from_mp3(f)
-    print("first x seconds")
-    duration = 10 * 1000  # ms
-    song = song[:duration]
-    print("split")
     
     # Splitting takes a while ... perhaps background this somehow.
     print('splitting on silence ...')
