@@ -4,6 +4,9 @@
 
 from pydub import AudioSegment
 from pydub import playback
+
+import simpleaudio
+
 from pydub.silence import split_on_silence
 import os
 import sys
@@ -59,14 +62,25 @@ class Player(BaseProcess):
         super().__init__()
         # self._closed = False
         self.proc = None
+        self.play_obj = None
         self.chunks = chunks
         self.maxindex = len(self.chunks)
         self.index = 0
 
     def play_chunk(self):
         print(f"  playing  {self.index}", end = "\r\n")
-        chunk = self.chunks[self.index]
-        playback.play(chunk)
+        seg = self.chunks[self.index]
+        # playback.play(chunk) - old
+
+        # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572
+        self.play_obj = simpleaudio.play_buffer(
+            seg.raw_data,
+            num_channels=seg.channels,
+            bytes_per_sample=seg.sample_width,
+            sample_rate=seg.frame_rate
+        )
+        self.play_obj.wait_done()
+
         print(f"  finished {self.index}", end = "\r\n")
 
     def do_play(self):
@@ -103,21 +117,16 @@ class Player(BaseProcess):
         print(f"done quitting", end = "\r\n")
         # self.queue.join()
 
+    def quit(self):
+        if (self.proc is not None):
+            print("- terminating proc right away", end = "\r\n")
+            self.proc.terminate()
+        else:
+            print("no proc to terminote", end = "\r\n")
+        self.send('quit')
+
     def printstats(self):
         print(f"- Curr index: {self.index}.  count: {self.maxindex}.  Got self.proc? {self.proc is not None}")
-
-    def gotcommand(self, t):
-        print("got command : " + t, end = "\r\n")
-        if (t == 'q'):
-            print("GOT A Q.")
-            self.printstats()
-            if (self.proc is not None):
-                print("- terminating proc right away", end = "\r\n")
-                self.proc.terminate()
-                # self.proc = None
-            else:
-                print("- no proc to quit!!", end = "\r\n")
-            self.send('quit')
 
 
 ######################
@@ -182,7 +191,8 @@ def main():
         print('hit any key, q to quit ...')
         t = wait_key()
         player.printstats()
-        player.gotcommand(t)
+
+    player.quit()
 
     print("exiting program ...")
 
