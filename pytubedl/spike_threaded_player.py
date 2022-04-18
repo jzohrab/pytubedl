@@ -118,6 +118,12 @@ class Player(BaseProcess):
         # self.queue.join()
 
     def quit(self):
+        if (self.play_obj is not None):
+            print("stopping play obj")
+            self.play_obj.stop()
+        else:
+            print("no play_obj to stop")
+
         if (self.proc is not None):
             print("- terminating proc right away", end = "\r\n")
             self.proc.terminate()
