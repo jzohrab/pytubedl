@@ -226,6 +226,7 @@ class AudioPlayer:
         self.chunks = chunks
         self.maxindex = len(self.chunks) - 1
         self.index = -1
+        self.is_paused = False
 
     def next(self):
         self.index += 1
@@ -233,7 +234,19 @@ class AudioPlayer:
     def is_done(self):
         return self.index > self.maxindex
 
-    def play_current(self):
+    def toggle_pause(self):
+        p = self.is_paused
+        now_paused = not p
+        if now_paused:
+            self.play_obj.stop()
+        else:
+            self.play()
+        self.is_paused = now_paused
+
+    def play(self):
+        if (self.is_done()):
+            return
+
         print(f"Playing index {self.index}")
         seg = self.chunks[self.index]
 
@@ -262,19 +275,32 @@ class AudioPlayer:
     def handlekey(self, k):
         print(f"IN PLAYER, got a key: {k}")
 
+    def previous(self):
+        i = self.index
+        i -= 1
+        if i < 0:
+            i = 0
+        self.index = i
+
     def quit(self):
         print("quitting")
         if self.play_obj:
             self.play_obj.stop()
         self.index = self.maxindex + 1
 
+    def continue_play(self):
+        """Ugly method -- keep playing clips if remaining, and if not paused."""
+        if self.is_paused or self.is_playing():
+            return
+
+        self.next()
+        if not self.is_done():
+            self.play()
+
 
 def playprocessguts(player):
     while not player.is_done():
-        if not player.is_playing():
-            player.next()
-            if not player.is_done():
-                player.play_current()
+        player.continue_play()
 
 
 def main2():
@@ -290,7 +316,10 @@ def main2():
     while (t != 'q'):
         print('hit any key, q to quit ...')
         t = wait_key()
-        print(f"Got a key: {t}")
+        if (t == ' '):
+            player.toggle_pause()
+        if (t == 'p'):
+            player.previous()
 
     player.quit()
 
