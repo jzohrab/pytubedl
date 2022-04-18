@@ -226,13 +226,28 @@ class AudioPlayer:
         self.chunks = chunks
         self.maxindex = len(self.chunks) - 1
         self.index = -1
+        self.endindex = len(chunks)
         self.is_paused = False
 
+    def printstats(self):
+        print(f"player: index = {self.index}, max = {self.maxindex}")
+
     def next(self):
-        self.index += 1
+        i = self.index + 1
+        if i > self.endindex:
+            i = self.endindex
+        self.index = i
+        self.printstats()
+
+    def previous(self):
+        i = self.index - 1
+        if i < 0:
+            i = 0
+        self.index = i
+        self.printstats()
 
     def is_done(self):
-        return self.index > self.maxindex
+        return self.index >= self.endindex
 
     def toggle_pause(self):
         p = self.is_paused
@@ -275,18 +290,11 @@ class AudioPlayer:
     def handlekey(self, k):
         print(f"IN PLAYER, got a key: {k}")
 
-    def previous(self):
-        i = self.index
-        i -= 1
-        if i < 0:
-            i = 0
-        self.index = i
-
     def quit(self):
         print("quitting")
         if self.play_obj:
             self.play_obj.stop()
-        self.index = self.maxindex + 1
+        self.index = self.endindex
 
     def continue_play(self):
         """Ugly method -- keep playing clips if remaining, and if not paused."""
