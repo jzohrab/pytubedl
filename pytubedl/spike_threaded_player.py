@@ -119,6 +119,64 @@ class Player(BaseProcess):
             self.send('quit')
 
 
+def main():
+    chunks = [1,2,3]
+
+    player = Player(chunks)
+
+    print("--------------", end = "\r\n")
+    print("about to start()", end = "\r\n")
+    player.start()
+    print("done start()", end = "\r\n")
+
+    print("--------------", end = "\r\n")
+    print("about to send 'play'", end = "\r\n")
+    # player.play()
+    player.send('play')
+    print("sent 'play'", end = "\r\n")
+    
+    t = ''
+    while (t != 'q'):
+        print('hit any key, q to quit ...')
+        t = wait_key()
+        player.printstats()
+        player.gotcommand(t)
+
+    print("exiting program ...")
+
+
+# Play each chunk in a process.
+class ProcessPlayer:
+
+    def __init__(self, chunks):
+        self.chunks = chunks
+        self.index = 0
+        self.proc = None
+        self.maxindex = len(self.chunks) - 1
+
+    def do_play(self):
+        print(f"playing {self.index}")
+        time.sleep(2)
+        
+    def play_current(self):
+        self.proc = Process(name="playsound", target=self.do_play)
+        self.proc.start()
+        self.proc.join()
+
+    def stop(self):
+        if (self.proc is not None):
+            print('stopping current proc')
+            self.proc.terminate()
+        else:
+            print('no proc to stop')
+
+    def play(self):
+        is_playing = True
+        while is_playing and self.index <= self.maxindex:
+            self.play_current()
+            self.index += 1
+
+
 ######################
 # Getting chunks later
 
@@ -160,30 +218,17 @@ def get_chunks():
 ######################
 # Main
 
-def main():
+def mainProcessPlayer():
     chunks = [1,2,3]
+    pp = ProcessPlayer(chunks)
+    pp.play()
 
-    player = Player(chunks)
-
-    print("--------------", end = "\r\n")
-    print("about to start()", end = "\r\n")
-    player.start()
-    print("done start()", end = "\r\n")
-
-    print("--------------", end = "\r\n")
-    print("about to send 'play'", end = "\r\n")
-    # player.play()
-    player.send('play')
-    print("sent 'play'", end = "\r\n")
-    
     t = ''
     while (t != 'q'):
         print('hit any key, q to quit ...')
         t = wait_key()
-        player.printstats()
-        player.gotcommand(t)
 
-    print("exiting program ...")
+
 
 
 # Have to do this "__name__ == __main__" check,
@@ -191,4 +236,5 @@ def main():
 # An attempt has been made to start a new process before the current process has finished its bootstrapping phase.
 if __name__ == "__main__":
     main()
+    # mainProcessPlayer()
 
