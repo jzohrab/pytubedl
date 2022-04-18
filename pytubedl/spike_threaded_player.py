@@ -227,8 +227,14 @@ class AudioPlayer:
         self.maxindex = len(self.chunks) - 1
         self.index = -1
 
-    def play_next(self):
+    def next(self):
         self.index += 1
+
+    def is_done(self):
+        return self.index > self.maxindex
+
+    def play_current(self):
+        print(f"Playing index {self.index}")
         seg = self.chunks[self.index]
 
         # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572.
@@ -253,18 +259,44 @@ class AudioPlayer:
                 return self.play_obj.is_playing()
         return False
 
-    def is_done(self):
-        return self.index >= self.maxindex
+    def handlekey(self, k):
+        print(f"IN PLAYER, got a key: {k}")
+
+    def quit(self):
+        print("quitting")
+        if self.play_obj:
+            self.play_obj.stop()
+        self.index = self.maxindex + 1
+
+
+def playprocessguts(player):
+    while not player.is_done():
+        if not player.is_playing():
+            player.next()
+            if not player.is_done():
+                player.play_current()
 
 
 def main2():
     # chunks = ['apple', 'bat', 'cat', 'dog']
     chunks = get_chunks()
-
+    # p = Process(target=playprocessguts, args=(chunks,))
+    # p.start()
     player = AudioPlayer(chunks)
-    while not player.is_done():
-        if not player.is_playing():
-            player.play_next()
+    thr = threading.Thread(target=playprocessguts, args=(player,))
+    thr.start()
+
+    t = ''
+    while (t != 'q'):
+        print('hit any key, q to quit ...')
+        t = wait_key()
+        print(f"Got a key: {t}")
+
+    player.quit()
+
+    # p.join()
+    thr.join()
+
 
 if __name__ == "__main__":
    main2()
