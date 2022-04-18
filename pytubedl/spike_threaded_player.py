@@ -221,8 +221,18 @@ def main():
 
 
 class AudioPlayer:
+
+    # A "NullPlayer" implementing the interface of the object returned by simpleaudio.play_buffer,
+    # which does nothing.
+    class NullPlayer:
+        def stop(self): pass
+        def play_buffer(self): pass
+        def is_playing(self): return False
+
+    null_player = NullPlayer()
+
     def __init__(self, chunks):
-        self.play_obj = None
+        self.play_obj = AudioPlayer.null_player
         self.chunks = chunks
         self.maxindex = len(self.chunks) - 1
         self.index = 0
@@ -233,19 +243,22 @@ class AudioPlayer:
     def printstats(self):
         print(f"player: currindex = {self.currentindex}, index = {self.index}, max = {self.maxindex}")
 
-    def next(self):
-        i = self.index + 1
+    def change_index(self, d):
+        self.stop()
+        i = self.index + d
+        if i < 0:
+            i = 0
         if i > self.endindex:
             i = self.endindex
         self.index = i
         self.printstats()
+        self.play()
+        
+    def next(self):
+        self.change_index(1)
 
     def previous(self):
-        i = self.index - 1
-        if i < 0:
-            i = 0
-        self.index = i
-        self.printstats()
+        self.change_index(-1)
 
     def is_done(self):
         return self.index >= self.endindex
@@ -260,9 +273,9 @@ class AudioPlayer:
         self.is_paused = now_paused
 
     def play(self):
-        if (self.is_done()):
-            return
         if (self.is_playing()):
+            return
+        if (self.is_done()):
             return
 
         self.currentindex = self.index
@@ -285,19 +298,19 @@ class AudioPlayer:
             sample_rate=seg.frame_rate
         )
 
+    def stop(self):
+        self.play_obj.stop()
+        self.play_obj = AudioPlayer.null_player
 
     def is_playing(self):
-        if self.play_obj:
-                return self.play_obj.is_playing()
-        return False
+        return self.play_obj.is_playing()
 
     def handlekey(self, k):
         print(f"IN PLAYER, got a key: {k}")
 
     def quit(self):
         print("quitting")
-        if self.play_obj:
-            self.play_obj.stop()
+        self.play_obj.stop()
         self.index = self.endindex
 
     def continue_play(self):
