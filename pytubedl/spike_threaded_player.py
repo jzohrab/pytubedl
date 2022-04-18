@@ -225,12 +225,13 @@ class AudioPlayer:
         self.play_obj = None
         self.chunks = chunks
         self.maxindex = len(self.chunks) - 1
-        self.index = -1
+        self.index = 0
         self.endindex = len(chunks)
+        self.currentindex = 0
         self.is_paused = False
 
     def printstats(self):
-        print(f"player: index = {self.index}, max = {self.maxindex}")
+        print(f"player: currindex = {self.currentindex}, index = {self.index}, max = {self.maxindex}")
 
     def next(self):
         i = self.index + 1
@@ -261,9 +262,12 @@ class AudioPlayer:
     def play(self):
         if (self.is_done()):
             return
+        if (self.is_playing()):
+            return
 
-        print(f"Playing index {self.index}")
-        seg = self.chunks[self.index]
+        self.currentindex = self.index
+        print(f"Playing index {self.currentindex}")
+        seg = self.chunks[self.currentindex]
 
         # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572.
         #
@@ -301,10 +305,8 @@ class AudioPlayer:
         if self.is_paused or self.is_playing():
             return
 
+        self.play()
         self.next()
-        if not self.is_done():
-            self.play()
-
 
 def playprocessguts(player):
     while not player.is_done():
