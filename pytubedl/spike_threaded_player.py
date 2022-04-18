@@ -210,7 +210,62 @@ def main():
 # Have to do this "__name__ == __main__" check,
 # or python complains with:
 # An attempt has been made to start a new process before the current process has finished its bootstrapping phase.
-if __name__ == "__main__":
-    main()
-    # mainProcessPlayer()
+# if __name__ == "__main__":
+#    main()
+#    # mainProcessPlayer()
 
+
+####
+# even easier?
+# ref https://stackoverflow.com/questions/58566079/how-do-i-stop-simpleaudio-from-playing-a-file-twice-simulaneously
+
+
+class AudioPlayer:
+    def __init__(self, chunks):
+        self.play_obj = None
+        self.chunks = chunks
+        self.maxindex = len(self.chunks) - 1
+        self.index = -1
+
+    def play_next(self):
+        self.index += 1
+        seg = self.chunks[self.index]
+
+        # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572.
+        #
+        # per simpleaudio docs, noted in https://stackoverflow.com/questions/58566079/how-do-i-stop-simpleaudio-from-playing-a-file-twice-simulaneously,
+        #
+        # The module implements an asynchronous interface, meaning
+        # that program execution continues immediately after audio
+        # playback is started and a background thread takes care of
+        # the rest. This makes it easy to incorporate audio playback
+        # into GUI-driven applications that need to remain responsive.
+        self.play_obj = simpleaudio.play_buffer(
+            seg.raw_data,
+            num_channels=seg.channels,
+            bytes_per_sample=seg.sample_width,
+            sample_rate=seg.frame_rate
+        )
+
+
+    def is_playing(self):
+        if self.play_obj:
+                return self.play_obj.is_playing()
+        return False
+
+    def is_done(self):
+        return self.index >= self.maxindex
+
+
+def main2():
+    # chunks = ['apple', 'bat', 'cat', 'dog']
+    chunks = get_chunks()
+
+    player = AudioPlayer(chunks)
+    while not player.is_done():
+        if not player.is_playing():
+            player.play_next()
+
+if __name__ == "__main__":
+   main2()
+   # mainProcessPlayer()
