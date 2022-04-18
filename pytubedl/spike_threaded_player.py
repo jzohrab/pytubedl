@@ -251,7 +251,7 @@ class AudioPlayer:
         if i > self.endindex:
             i = self.endindex
         self.index = i
-        self.printstats()
+        # self.printstats()
         self.play()
         
     def next(self):
@@ -279,7 +279,7 @@ class AudioPlayer:
             return
 
         self.currentindex = self.index
-        print(f"Playing index {self.currentindex}")
+        # print(f"Playing index {self.currentindex}")
         seg = self.chunks[self.currentindex]
 
         # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572.
@@ -297,6 +297,7 @@ class AudioPlayer:
             bytes_per_sample=seg.sample_width,
             sample_rate=seg.frame_rate
         )
+        self.is_paused = False
 
     def stop(self):
         self.play_obj.stop()
@@ -311,18 +312,19 @@ class AudioPlayer:
     def quit(self):
         print("quitting")
         self.play_obj.stop()
+        self.play_obj = AudioPlayer.null_player
         self.index = self.endindex
 
     def continue_play(self):
         """Ugly method -- keep playing clips if remaining, and if not paused."""
+        # print(f"paused = {self.is_paused}; playing = {self.is_playing()}")
         if self.is_paused or self.is_playing():
             return
-
         self.play()
         self.next()
 
 def playprocessguts(player):
-    while not player.is_done():
+    while player and not player.is_done():
         player.continue_play()
 
 
@@ -343,10 +345,13 @@ def main2():
             player.toggle_pause()
         if (t == 'p'):
             player.previous()
+        if (t == 'n'):
+            player.next()
 
     player.quit()
 
-    # p.join()
+    # Thread must be joined after the player is quit, or it keeps
+    # playing to the end.
     thr.join()
 
 
