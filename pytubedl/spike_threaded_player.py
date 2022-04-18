@@ -44,9 +44,9 @@ class BaseProcess(mp.Process):
     def dispatch(self, msg):
         event, args = msg
 
-        handler = getattr(self, "do_%s" % event, None)
+        handler = getattr(self, event, None)
         if not handler:
-            raise NotImplementedError("Process has no handler for [%s]" % event)
+            raise NotImplementedError("Process has no handler named [%s]" % event)
 
         handler(*args)
 
@@ -102,11 +102,11 @@ class Player(BaseProcess):
         if (self.index < self.maxindex - 1):
             # self.do_play()
             self.index += 1
-            self.send('play')
+            self.send('do_play')
         else:
             print("No more chunks.", end = "\r\n")
             # DON'T necessarily quit ... the user might want to backtrack, export the last clip, etc.  Just hang out.
-            # self.send('quit')
+            # self.send('do_quit')
 
         print(f"end of call to play with index {i}", end = "\r\n")
 
@@ -116,6 +116,14 @@ class Player(BaseProcess):
         self.queue.close()
         print(f"done quitting", end = "\r\n")
         # self.queue.join()
+
+    def previous(self):
+        print(f"Going back to previous, current index = {self.index}")
+        ci = self.index
+        ci -= 1
+        if (ci < 0):
+            ci = 0
+        self.index = ci
 
     def quit(self):
         if (self.play_obj is not None):
@@ -129,7 +137,7 @@ class Player(BaseProcess):
             self.proc.terminate()
         else:
             print("no proc to terminote", end = "\r\n")
-        self.send('quit')
+        self.send('do_quit')
 
     def printstats(self):
         print(f"- Curr index: {self.index}.  count: {self.maxindex}.  Got self.proc? {self.proc is not None}")
@@ -189,14 +197,18 @@ def main():
     print("--------------", end = "\r\n")
     print("about to send 'play'", end = "\r\n")
     # player.play()
-    player.send('play')
+    player.send('do_play')
     print("sent 'play'", end = "\r\n")
-    
+
     t = ''
     while (t != 'q'):
         print('hit any key, q to quit ...')
         t = wait_key()
-        player.printstats()
+        print(f"Got a key: {t}")
+        if (t == 'a'):
+            player.previous()
+        if (t == 'p'):
+            player.printstats()
 
     player.quit()
 
