@@ -120,77 +120,8 @@ class Player(BaseProcess):
             self.send('quit')
 
 
-def main():
-    # chunks = ['apple', 'bat', 'cat', 'dog']
-    chunks = get_chunks()
-
-    player = Player(chunks)
-
-    print("--------------", end = "\r\n")
-    print("about to start()", end = "\r\n")
-    player.start()
-    print("done start()", end = "\r\n")
-
-    print("--------------", end = "\r\n")
-    print("about to send 'play'", end = "\r\n")
-    # player.play()
-    player.send('play')
-    print("sent 'play'", end = "\r\n")
-    
-    t = ''
-    while (t != 'q'):
-        print('hit any key, q to quit ...')
-        t = wait_key()
-        player.printstats()
-        player.gotcommand(t)
-
-    print("exiting program ...")
-
-
-# Play each chunk in a process.
-class ProcessPlayer:
-
-    def __init__(self, chunks):
-        self.chunks = chunks
-        self.index = 0
-        self.proc = None
-        self.maxindex = len(self.chunks) - 1
-
-    def do_play(self):
-        print(f"playing {self.index}")
-        time.sleep(2)
-        
-    def play_current(self):
-        self.proc = Process(name="playsound", target=self.do_play)
-        self.proc.start()
-        self.proc.join()
-
-    def stop(self):
-        if (self.proc is not None):
-            print('stopping current proc')
-            self.proc.terminate()
-        else:
-            print('no proc to stop')
-
-    def play(self):
-        is_playing = True
-        while is_playing and self.index <= self.maxindex:
-            self.play_current()
-            self.index += 1
-
-def mainProcessPlayer():
-    chunks = [1,2,3]
-    pp = ProcessPlayer(chunks)
-    pp.play()
-
-    t = ''
-    while (t != 'q'):
-        print('hit any key, q to quit ...')
-        t = wait_key()
-
-
 ######################
-# Getting chunks later
+# Getting chunks
 
 def get_chunks():
 
@@ -226,6 +157,35 @@ def get_chunks():
         # playback.play(chunk)
 
     return chunks
+
+################
+
+def main():
+    # chunks = ['apple', 'bat', 'cat', 'dog']
+    chunks = get_chunks()
+
+    player = Player(chunks)
+
+    print("--------------", end = "\r\n")
+    print("about to start()", end = "\r\n")
+    player.start()
+    print("done start()", end = "\r\n")
+
+    print("--------------", end = "\r\n")
+    print("about to send 'play'", end = "\r\n")
+    # player.play()
+    player.send('play')
+    print("sent 'play'", end = "\r\n")
+    
+    t = ''
+    while (t != 'q'):
+        print('hit any key, q to quit ...')
+        t = wait_key()
+        player.printstats()
+        player.gotcommand(t)
+
+    print("exiting program ...")
+
 
 ######################
 # Main
