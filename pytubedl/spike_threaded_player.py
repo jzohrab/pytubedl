@@ -55,6 +55,22 @@ def get_chunks():
 ####
 # ref https://stackoverflow.com/questions/58566079/how-do-i-stop-simpleaudio-from-playing-a-file-twice-simulaneously
 
+# From https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread/
+class StoppableThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+    def __init__(self,  *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self._stop_event = threading.Event()
+
+    def stop(self):
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
+
+
+
 class AudioPlayer:
 
     # A "NullPlayer" implementing the interface of the object returned by simpleaudio.play_buffer,
@@ -69,24 +85,32 @@ class AudioPlayer:
     def __init__(self, chunks):
         self.play_obj = AudioPlayer.null_player
         self.chunks = chunks
-        self.maxindex = len(self.chunks) - 1
-        self.index = 0
         self.endindex = len(chunks)
-        self.currentindex = 0
+
+        # NOTE we start "before" the first track ... calling play()
+        # advances the index to 0, to the first track.
+        self.index = -1
+        self.currentindex = self.index
+        self.is_autoplay = False
+
+        # For "auto-advance" playing.
+        self.autoplaythread = None
 
     def printstats(self):
-        print(f"player: currindex = {self.currentindex}, index = {self.index}, max = {self.maxindex}")
+        print(f"player: currindex = {self.currentindex}, index = {self.index}")
 
     def change_index(self, d):
-        self.stop()
-        i = self.index + d
+        """Move to next or previous."""
+        self._stopplaying()
+        i = self.currentindex + d
         if i < 0:
             i = 0
         if i > self.endindex:
             i = self.endindex
+            self.stop()
         self.index = i
-        # self.printstats()
-        self.play()
+        self.printstats()
+        # self.play_current()
         
     def next(self):
         self.change_index(1)
@@ -97,7 +121,8 @@ class AudioPlayer:
     def is_done(self):
         return self.index >= self.endindex
 
-    def play(self):
+    def play_current(self):
+        """Play chunk at current index only."""
         if (self.is_playing()):
             return
         if (self.is_done()):
@@ -123,9 +148,26 @@ class AudioPlayer:
             sample_rate=seg.frame_rate
         )
 
-    def stop(self):
+    def _autoplay(self):
+        if (self.autoplaythread is None):
+            return
+        while not self.autoplaythread.stopped():
+            if not self.is_playing():
+                self.next()
+                self.play_current()
+
+    def play(self):
+        self.autoplaythread = StoppableThread(target=self._autoplay)
+        self.autoplaythread.start()
+
+    def _stopplaying(self):
         self.play_obj.stop()
         self.play_obj = AudioPlayer.null_player
+
+    def stop(self):
+        self._stopplaying()
+        if (self.autoplaythread.is_alive()):
+            self.autoplaythread.stop()
 
     def is_playing(self):
         return self.play_obj.is_playing()
@@ -139,41 +181,28 @@ class AudioPlayer:
         self.play_obj = AudioPlayer.null_player
         self.index = self.endindex
 
-    def continue_play(self):
-        """Ugly method -- keep playing clips if remaining, and if not paused."""
-        # print(f"paused = {self.is_paused}; playing = {self.is_playing()}")
-        if self.is_playing():
-            return
-        self.play()
-        self.next()
-
-def playprocessguts(player):
-    while player and not player.is_done():
-        player.continue_play()
 
 
 def main():
     chunks = get_chunks()
     player = AudioPlayer(chunks)
-    thr = threading.Thread(target=playprocessguts, args=(player,))
-    thr.start()
+    player.play()
 
     t = ''
     while (t != 'q'):
         print('hit any key, q to quit ...')
         t = wait_key()
-        if (t == 's'):
-            player.stop()
+        if (t == ' '):
+            if player.is_playing():
+                player.stop()
+            else:
+                player.start()
         if (t == 'p'):
             player.previous()
         if (t == 'n'):
             player.next()
 
     player.quit()
-
-    # Thread must be joined after the player is quit, or it keeps
-    # playing to the end.
-    thr.join()
 
 
 if __name__ == "__main__":
