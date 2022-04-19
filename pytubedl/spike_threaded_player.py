@@ -73,7 +73,6 @@ class AudioPlayer:
         self.index = 0
         self.endindex = len(chunks)
         self.currentindex = 0
-        self.is_paused = False
 
     def printstats(self):
         print(f"player: currindex = {self.currentindex}, index = {self.index}, max = {self.maxindex}")
@@ -97,15 +96,6 @@ class AudioPlayer:
 
     def is_done(self):
         return self.index >= self.endindex
-
-    def toggle_pause(self):
-        p = self.is_paused
-        now_paused = not p
-        if now_paused:
-            self.play_obj.stop()
-        else:
-            self.play()
-        self.is_paused = now_paused
 
     def play(self):
         if (self.is_playing()):
@@ -132,7 +122,6 @@ class AudioPlayer:
             bytes_per_sample=seg.sample_width,
             sample_rate=seg.frame_rate
         )
-        self.is_paused = False
 
     def stop(self):
         self.play_obj.stop()
@@ -153,7 +142,7 @@ class AudioPlayer:
     def continue_play(self):
         """Ugly method -- keep playing clips if remaining, and if not paused."""
         # print(f"paused = {self.is_paused}; playing = {self.is_playing()}")
-        if self.is_paused or self.is_playing():
+        if self.is_playing():
             return
         self.play()
         self.next()
@@ -173,8 +162,8 @@ def main():
     while (t != 'q'):
         print('hit any key, q to quit ...')
         t = wait_key()
-        if (t == ' '):
-            player.toggle_pause()
+        if (t == 's'):
+            player.stop()
         if (t == 'p'):
             player.previous()
         if (t == 'n'):
