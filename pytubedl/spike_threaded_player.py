@@ -155,6 +155,7 @@ class AudioPlayer:
             if not self.is_playing():
                 self.next()
                 self.play_current()
+            time.sleep(0.05) # 50 ms
 
     def play(self):
         self.autoplaythread = StoppableThread(target=self._autoplay)
