@@ -73,22 +73,15 @@ class StoppableThread(threading.Thread):
 
 class AudioPlayer:
 
-    # A "NullPlayer" implementing the interface of the object returned by simpleaudio.play_buffer,
-    # which does nothing.
-    class NullPlayer:
-        def stop(self): pass
-        def play_buffer(self): pass
-        def wait_done(self): pass
-        def is_playing(self): return False
-
-    null_player = NullPlayer()
-
     def __init__(self, chunks):
-        self.play_obj = AudioPlayer.null_player
+        self.play_obj = None # AudioPlayer.null_player
         self.chunks = chunks
         self.endindex = len(chunks)
 
+        # Index used by the player.
         self.index = 0
+        # Index of what's currently being played, necessary to resolve some threading issues.
+        self.currently_playing_index = 0
 
         # For "auto-advance" playing.
         self.autoplaythread = None
@@ -98,12 +91,7 @@ class AudioPlayer:
 
     def change_index(self, d):
         """Move to next or previous."""
-        print(f"changing index by {d}")
         self._stopplaying()
-
-        # was_playing = self.autoplaythread is not None and not self.autoplaythread.stopped()
-        # self.stop()  # stop autoplay thread too
-
         i = self.index + d
         if i < 0:
             i = 0
@@ -112,10 +100,6 @@ class AudioPlayer:
             # Stop the "autoplay" thread.
             # self.stop()
         self.index = i
-        self.printstats()
-
-        # if was_playing: self.play()
-        # self.play_current()
         
     def next(self):
         self.change_index(1)
@@ -129,21 +113,11 @@ class AudioPlayer:
     def play_current(self):
         """Play chunk at current index only."""
         if (self.is_playing() or self.is_done()):
-            print("fast exit of play_current")
+            # print("fast exit of play_current")
             return
 
-        print(f"Playing index {self.index}")
-        seg = self.chunks[self.index]
-
-        # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572.
-        #
-        # per simpleaudio docs, noted in https://stackoverflow.com/questions/58566079/how-do-i-stop-simpleaudio-from-playing-a-file-twice-simulaneously,
-        #
-        # The module implements an asynchronous interface, meaning
-        # that program execution continues immediately after audio
-        # playback is started and a background thread takes care of
-        # the rest. This makes it easy to incorporate audio playback
-        # into GUI-driven applications that need to remain responsive.
+        i = self.index
+        seg = self.chunks[i]
         self.play_obj = simpleaudio.play_buffer(
             seg.raw_data,
             num_channels=seg.channels,
@@ -151,16 +125,30 @@ class AudioPlayer:
             sample_rate=seg.frame_rate
         )
 
+        # Keep track of the index.
+        # Am keeping track of this because various threads and interactions
+        # may change the index, and the user's "move previous/next" get affected
+        # by the auto-advance loop.
+        self.currently_playing_index = i
+        self.play_obj.wait_done()
+
     def _autoplay(self):
         if (self.autoplaythread is None):
             return
         while not self.autoplaythread.stopped() and not self.is_done():
             if not self.is_playing():
                 self.play_current()
-                print("in _autoplay, about to wait done.")
-                self.play_obj.wait_done()
-                print("in _autoplay, moving to next")
-                self.next()
+                # print("in _autoplay, moving to next")
+
+                # If the currently playing index is the same as the player's index,
+                # the user hasn't requested a move previous/next, so just move to the next one.
+                if (self.currently_playing_index == self.index):
+                    i = self.index + 1
+                    if i > self.endindex:
+                        i = self.endindex
+                    self.index = i
+
+                # self.next()
             # time.sleep(0.05) # 50 ms
 
     def play(self):
@@ -168,8 +156,10 @@ class AudioPlayer:
         self.autoplaythread.start()
 
     def _stopplaying(self):
-        self.play_obj.stop()
-        self.play_obj = AudioPlayer.null_player
+        if self.play_obj is not None:
+            self.play_obj.stop()
+            # self.play_obj = AudioPlayer.null_player
+            self.play_obj = None
 
     def stop(self):
         self._stopplaying()
@@ -177,15 +167,14 @@ class AudioPlayer:
             self.autoplaythread.stop()
 
     def is_playing(self):
+        if self.play_obj is None: return False
         return self.play_obj.is_playing()
 
-    def handlekey(self, k):
-        print(f"IN PLAYER, got a key: {k}")
-
     def quit(self):
-        print("quitting")
-        self.play_obj.stop()
-        self.play_obj = AudioPlayer.null_player
+        # print("quitting")
+        if self.play_obj is not None:
+            self.play_obj.stop()
+            self.play_obj = None # AudioPlayer.null_player
         self.index = self.endindex
 
 
@@ -207,6 +196,7 @@ def main():
                 print("restarting")
                 player.play()
         if (t == 'p'):
+            print("p hit, moving previous")
             player.previous()
         if (t == 'n'):
             player.next()
