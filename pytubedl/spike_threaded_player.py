@@ -230,6 +230,10 @@ def main():
             player.stop()
             transcription = voskutils.transcribe_audiosegment(seg)
             print(transcription)
+        if (t == 'r'):
+            player.stop()
+            player = AudioPlayer(audiosegments)
+            player.play()
 
     player.quit()
 
