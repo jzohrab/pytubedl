@@ -125,6 +125,10 @@ class AudioPlayer:
             sample_rate=seg.frame_rate
         )
 
+        # Idea for future: perhaps try using a callback version, to
+        # keep track of time info?
+        # https://riptutorial.com/python/example/31900/callback-mode-audio-i-o
+
         # Hacky_thread_code: Keep track of the actual playing index.
         # The _autoplay thread changes self.index, and it misbehaves
         # from the user's perspective if the user tries to "move

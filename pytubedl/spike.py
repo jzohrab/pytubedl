@@ -16,7 +16,7 @@ if not os.path.exists("model"):
 
 ######################
 # Vosk transcribe a wav file.
-# Copied from below URL:
+# ref:
 # https://github.com/alphacep/vosk-api/blob/master/python/example/test_simple.py
 
 from vosk import Model, KaldiRecognizer, SetLogLevel
