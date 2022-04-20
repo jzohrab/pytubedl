@@ -151,7 +151,7 @@ class AudioPlayer:
     def _autoplay(self):
         if (self.autoplaythread is None):
             return
-        while not self.autoplaythread.stopped():
+        while not self.autoplaythread.stopped() and not self.is_done():
             if not self.is_playing():
                 self.next()
                 self.play_current()
@@ -194,10 +194,12 @@ def main():
         print('hit any key, q to quit ...')
         t = wait_key()
         if (t == ' '):
+            print(f"playing? {player.is_playing()}")
             if player.is_playing():
                 player.stop()
             else:
-                player.start()
+                print("restarting")
+                player.play()
         if (t == 'p'):
             player.previous()
         if (t == 'n'):
