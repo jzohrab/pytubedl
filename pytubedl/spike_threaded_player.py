@@ -209,6 +209,8 @@ def main():
     player = AudioPlayer(audiosegments)
     player.play()
 
+    transcriptions = {}
+
     t = ''
     while (t != 'q'):
         print('hit any key, q to quit ...')
@@ -227,9 +229,14 @@ def main():
             player.next()
         if (t == 't'):
             seg = player.current_audiosegment()
-            player.stop()
-            transcription = voskutils.transcribe_audiosegment(seg)
-            print(transcription)
+            segid = id(seg)
+            t = transcriptions.get(segid)
+            if t is None:
+                print(f"transcription for id = {id(seg)}")
+                player.stop()
+                t = voskutils.transcribe_audiosegment(seg)
+                transcriptions[segid] = t
+            print(t)
         if (t == 'r'):
             player.stop()
             player = AudioPlayer(audiosegments)
