@@ -78,6 +78,7 @@ class AudioPlayer:
     class NullPlayer:
         def stop(self): pass
         def play_buffer(self): pass
+        def wait_done(self): pass
         def is_playing(self): return False
 
     null_player = NullPlayer()
@@ -87,29 +88,33 @@ class AudioPlayer:
         self.chunks = chunks
         self.endindex = len(chunks)
 
-        # NOTE we start "before" the first track ... calling play()
-        # advances the index to 0, to the first track.
-        self.index = -1
-        self.currentindex = self.index
-        self.is_autoplay = False
+        self.index = 0
 
         # For "auto-advance" playing.
         self.autoplaythread = None
 
     def printstats(self):
-        print(f"player: currindex = {self.currentindex}, index = {self.index}")
+        print(f"player: index = {self.index}")
 
     def change_index(self, d):
         """Move to next or previous."""
+        print(f"changing index by {d}")
         self._stopplaying()
-        i = self.currentindex + d
+
+        # was_playing = self.autoplaythread is not None and not self.autoplaythread.stopped()
+        # self.stop()  # stop autoplay thread too
+
+        i = self.index + d
         if i < 0:
             i = 0
         if i > self.endindex:
             i = self.endindex
-            self.stop()
+            # Stop the "autoplay" thread.
+            # self.stop()
         self.index = i
         self.printstats()
+
+        # if was_playing: self.play()
         # self.play_current()
         
     def next(self):
@@ -123,14 +128,12 @@ class AudioPlayer:
 
     def play_current(self):
         """Play chunk at current index only."""
-        if (self.is_playing()):
-            return
-        if (self.is_done()):
+        if (self.is_playing() or self.is_done()):
+            print("fast exit of play_current")
             return
 
-        self.currentindex = self.index
-        # print(f"Playing index {self.currentindex}")
-        seg = self.chunks[self.currentindex]
+        print(f"Playing index {self.index}")
+        seg = self.chunks[self.index]
 
         # Using simpleaudio directly, as suggested in https://github.com/jiaaro/pydub/issues/572.
         #
@@ -153,9 +156,12 @@ class AudioPlayer:
             return
         while not self.autoplaythread.stopped() and not self.is_done():
             if not self.is_playing():
-                self.next()
                 self.play_current()
-            time.sleep(0.05) # 50 ms
+                print("in _autoplay, about to wait done.")
+                self.play_obj.wait_done()
+                print("in _autoplay, moving to next")
+                self.next()
+            # time.sleep(0.05) # 50 ms
 
     def play(self):
         self.autoplaythread = StoppableThread(target=self._autoplay)
@@ -167,7 +173,7 @@ class AudioPlayer:
 
     def stop(self):
         self._stopplaying()
-        if (self.autoplaythread.is_alive()):
+        if (self.autoplaythread is not None and self.autoplaythread.is_alive()):
             self.autoplaythread.stop()
 
     def is_playing(self):
