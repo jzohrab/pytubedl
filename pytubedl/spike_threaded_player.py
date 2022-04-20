@@ -22,9 +22,7 @@ import voskutils
 ######################
 # Getting chunks
 
-def get_audiosegments():
-
-    f = "sample/ten_seconds.mp3"
+def get_audiosegments(f):
     print("loading song")
     song = AudioSegment.from_mp3(f)
     
@@ -42,8 +40,8 @@ def get_audiosegments():
         keep_silence = True,
         # "silence" is anything quieter than -30 dBFS.
         silence_thresh = -30,
-        # silence must be at least 1000 ms long
-        min_silence_len = 1000
+        # silence must be at least 400 ms long
+        min_silence_len = 400
     )
     
     # Get lengths
@@ -204,8 +202,8 @@ class AudioPlayer:
 
 
 
-def main():
-    audiosegments = get_audiosegments()
+def main(f):
+    audiosegments = get_audiosegments(f)
     player = AudioPlayer(audiosegments)
     player.play()
 
@@ -216,14 +214,11 @@ def main():
         print('hit any key, q to quit ...')
         t = wait_key()
         if (t == ' '):
-            print(f"playing? {player.is_playing()}")
             if player.is_playing():
                 player.stop()
             else:
-                print("restarting")
                 player.play()
         if (t == 'p'):
-            print("p hit, moving previous")
             player.previous()
         if (t == 'n'):
             player.next()
@@ -232,7 +227,6 @@ def main():
             segid = id(seg)
             t = transcriptions.get(segid)
             if t is None:
-                print(f"transcription for id = {id(seg)}")
                 player.stop()
                 t = voskutils.transcribe_audiosegment(seg)
                 transcriptions[segid] = t
@@ -246,4 +240,8 @@ def main():
 
 
 if __name__ == "__main__":
-   main()
+    print("Player")
+    f = "sample/ten_seconds.mp3"
+    if len(sys.argv) == 2:
+        f = sys.argv[1]
+    main(f)
