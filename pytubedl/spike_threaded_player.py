@@ -53,7 +53,7 @@ def get_chunks():
 
 
 ####
-# ref https://stackoverflow.com/questions/58566079/how-do-i-stop-simpleaudio-from-playing-a-file-twice-simulaneously
+
 
 # From https://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread/
 class StoppableThread(threading.Thread):
@@ -125,11 +125,12 @@ class AudioPlayer:
             sample_rate=seg.frame_rate
         )
 
-        # Keep track of the index.
-        # Am keeping track of this because various threads and interactions
-        # may change the index, and the user's "move previous/next" get affected
-        # by the auto-advance loop.
+        # Hacky_thread_code: Keep track of the actual playing index.
+        # The _autoplay thread changes self.index, and it misbehaves
+        # from the user's perspective if the user tries to "move
+        # next/previous" while autoplay is occurring.
         self.currently_playing_index = i
+
         self.play_obj.wait_done()
 
     def _autoplay(self):
@@ -140,8 +141,10 @@ class AudioPlayer:
                 self.play_current()
                 # print("in _autoplay, moving to next")
 
-                # If the currently playing index is the same as the player's index,
-                # the user hasn't requested a move previous/next, so just move to the next one.
+                # Hacky_thread_code: If the currently playing index is
+                # the same as the player's index, the user hasn't
+                # requested a move previous/next, so just move to the
+                # next one.
                 if (self.currently_playing_index == self.index):
                     i = self.index + 1
                     if i > self.endindex:
@@ -163,6 +166,11 @@ class AudioPlayer:
 
     def stop(self):
         self._stopplaying()
+
+        # Hacky_thread_code: Setting currently_playing_index to None
+        # means that when the _autoplay resumes, it doesn't restart on
+        # the next index.
+        self.currently_playing_index = None
         if (self.autoplaythread is not None and self.autoplaythread.is_alive()):
             self.autoplaythread.stop()
 
