@@ -16,11 +16,13 @@ from pydub import AudioSegment
 from pydub import playback
 from pydub.silence import split_on_silence
 
+import voskutils
+
 
 ######################
 # Getting chunks
 
-def get_chunks():
+def get_audiosegments():
 
     f = "sample/ten_seconds.mp3"
     print("loading song")
@@ -73,10 +75,10 @@ class StoppableThread(threading.Thread):
 
 class AudioPlayer:
 
-    def __init__(self, chunks):
+    def __init__(self, audiosegments):
         self.play_obj = None # AudioPlayer.null_player
-        self.chunks = chunks
-        self.endindex = len(chunks)
+        self.audiosegments = audiosegments
+        self.endindex = len(audiosegments)
 
         # Index used by the player.
         self.index = 0
@@ -117,7 +119,7 @@ class AudioPlayer:
             return
 
         i = self.index
-        seg = self.chunks[i]
+        seg = self.audiosegments[i]
         self.play_obj = simpleaudio.play_buffer(
             seg.raw_data,
             num_channels=seg.channels,
@@ -136,6 +138,9 @@ class AudioPlayer:
         self.currently_playing_index = i
 
         self.play_obj.wait_done()
+
+    def current_audiosegment(self):
+        return self.audiosegments[self.currently_playing_index]
 
     def _autoplay(self):
         if (self.autoplaythread is None):
@@ -192,8 +197,8 @@ class AudioPlayer:
 
 
 def main():
-    chunks = get_chunks()
-    player = AudioPlayer(chunks)
+    audiosegments = get_audiosegments()
+    player = AudioPlayer(audiosegments)
     player.play()
 
     t = ''
@@ -212,6 +217,11 @@ def main():
             player.previous()
         if (t == 'n'):
             player.next()
+        if (t == 't'):
+            seg = player.current_audiosegment()
+            player.stop()
+            transcription = voskutils.transcribe_audiosegment(seg)
+            print(transcription)
 
     player.quit()
 
