@@ -82,6 +82,7 @@ class AudioPlayer:
 
         # Index used by the player.
         self.index = 0
+
         # Index of what's currently being played, necessary to resolve some threading issues.
         self.currently_playing_index = 0
 
@@ -140,7 +141,14 @@ class AudioPlayer:
         self.play_obj.wait_done()
 
     def current_audiosegment(self):
-        return self.audiosegments[self.currently_playing_index]
+        # If the player is stopped, currently_playing_index is None,
+        # in which case, get the index.
+        i = self.currently_playing_index
+        if i is None:
+            i = self.index
+        if i == self.endindex:
+            i -= 1
+        return self.audiosegments[i]
 
     def _autoplay(self):
         if (self.autoplaythread is None):
