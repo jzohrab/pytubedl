@@ -12,9 +12,13 @@ class MusicPlayer:
         window.geometry('500x400')
 
         self.music_file = None
-        self.song_length = 0
+        self.song_length_ms = 0
         self.mixer_init = False
         self.is_playing = False
+        self.start_pos_ms = 0
+
+        self.user_changing_slider = False
+        self.slider_update_id = None
 
         # Layout
         master_frame = Frame(window)
@@ -46,44 +50,48 @@ class MusicPlayer:
                                 to=100,
                                 orient=HORIZONTAL,
                                 value=0,
-                                command=self.slide,
                                 length=360)
         self.slider.grid(row=2, column=0, pady=10)
+        self.slider.bind('<Button-1>', self.slider_click)
+        self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
         # during testing
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
 
-    def slide(self, v):
-        # This method is called when the user changes the slider,
-        # and ALSO from the program loop update_slider().  So,
-        # if the user changes the current point, re-load the song.
-        current_pos = mixer.music.get_pos()
-        f = float(v)
-        diff = abs(current_pos - f)
-        if diff > 500:
-            print(f"suspect user updated, diff = {diff}")
-            # mixer.music.set_pos(f / 1000.0)  # can't set_pos
-            # mixer.music.load(self.music_file)
-            mixer.music.play(loops = 0, start = (f / 1000.0))
-            if not self.is_playing:
-                mixer.music.pause()
-            self.update_slider()
-        else:
-            print(f"not user updated?, diff = {diff}")
+    def slider_click(self, event):
+        print("sl click")
+        self.user_changing_slider = True
+        if self.slider_update_id:
+            self.slider.after_cancel(self.slider_update_id)
+        print(self.slider.get())
+
+    def slider_unclick(self, event):
+        self.user_changing_slider = False
+        value_ms_f = float(self.slider.get())
+        print(f"sl UNclick, reloading at current point {value_ms_f}")
+        mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
+        self.start_pos_ms = value_ms_f
+        if not self.is_playing:
+            mixer.music.pause()
+        self.update_slider()
 
     def update_slider(self):
+        print('entered update_slider')
+        if not self.mixer_init:
+            return
+
         if not self.is_playing:
             print("no update needed")
             return
 
-        current_pos = mixer.music.get_pos()
-        print(f"current pos = {current_pos} ms")
+        current_pos_ms = mixer.music.get_pos()
+        print(f"current pos = {current_pos_ms} ms")
         print(f"get= {self.slider.get()}")
         # print(f"to= {self.slider.to} ???")
-        self.slider.set(current_pos)
-        self.slider.after(500, self.update_slider)
+        self.slider.set(self.start_pos_ms + current_pos_ms)
+        self.slider_update_id = self.slider.after(500, self.update_slider)
 
     def load(self):
         f = filedialog.askopenfilename()
@@ -97,8 +105,9 @@ class MusicPlayer:
         print(f"Got file {f}")
         self.music_file = f
         song_mut = MP3(f)
-        self.song_length = song_mut.info.length * 1000  # length is in seconds
-        self.slider.config(to = self.song_length, value=0)
+        self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
+        self.slider.config(to = self.song_length_ms, value=0)
+        self.start_pos_ms = 0.0
 
     def play(self):
         if self.music_file is None:
@@ -109,6 +118,7 @@ class MusicPlayer:
         self.mixer_init = True
         mixer.music.load(self.music_file)
         mixer.music.play()
+        self.start_pos_ms = 0
         self.is_playing = True
         print("set is_playing to True just now")
         self.update_slider()
