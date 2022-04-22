@@ -2,8 +2,10 @@ cffi==1.15.0
 console==0.9907
 ezenv==0.92
 keyboard==0.13.5
+mutagen==1.45.1
 pycparser==2.21
 pydub==0.25.1
+pygame==2.1.2
 pyobjc==8.4.1
 pyobjc-core==8.4.1
 pyobjc-framework-Accounts==8.4.1
