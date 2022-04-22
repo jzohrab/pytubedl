@@ -2,28 +2,57 @@ from tkinter import *
 from tkinter import filedialog
 from pygame import mixer
 
+import tkinter.ttk as ttk
+
 class MusicPlayer:
     def __init__(self, window):
-        window.geometry('500x400')
         window.title('MP3 Player')
+        window.geometry('500x400')
         # window.resizable(0,0)
 
         f = ('Times', 10)
         play_img = PhotoImage(file='./images/play50.png')
-        Load = Button(window, text='Load', width=10, font=f, command=self.load)
-        Play = Button(window, text='Play', width=10, font=f, command=self.play)
-        Pause = Button(window, text='Pause', width=10, font=f, command=self.pause)
-        Stop = Button(window ,text='Stop', width=10, font=f, command=self.stop)
 
         self.music_file = None
         self.mixer_init = False
         self.playing_state = False
 
-        Load.place(x=0,y=20)
-        Play.place(x=110,y=20)
-        Pause.place(x=220,y=20)
-        Stop.place(x=110,y=60)
+        # Layout
+        master_frame = Frame(window)
+        master_frame.pack(pady=20)
 
+        song_box = Listbox(master_frame,
+                           bg="black", fg="green",
+                           width=60,
+                           selectbackground="green",
+                           selectforeground="black")
+        song_box.grid(row=0, column=0)
+
+        controls_frame = Frame(master_frame)
+        controls_frame.grid(row=1, column=0, pady=20)
+
+        load_button = Button(controls_frame, text='Load', width=10, font=f, command=self.load)
+        play_button = Button(controls_frame, text='Play', width=10, font=f, command=self.play)
+        pause_button = Button(controls_frame, text='Pause', width=10, font=f, command=self.pause)
+        stop_button = Button(controls_frame ,text='Stop', width=10, font=f, command=self.stop)
+
+        load_button.grid(row=0, column=1, padx=10)
+        play_button.grid(row=0, column=2, padx=10)
+        pause_button.grid(row=0, column=3, padx=10)
+        stop_button.grid(row=0, column=4, padx=10)
+
+        my_slider = ttk.Scale(master_frame,
+                              from_=0,
+                              to=100,
+                              orient=HORIZONTAL,
+                              value=0,
+                              command=self.slide,
+                              length=360)
+        my_slider.grid(row=2, column=0, pady=10)
+
+
+    def slide(self, v):
+        print(f"todo, slider position = {v}")
 
     def load(self):
         self.music_file = filedialog.askopenfilename()
