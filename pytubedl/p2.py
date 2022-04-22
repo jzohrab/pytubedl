@@ -15,6 +15,7 @@ class MusicPlayer:
 
         self.music_file = None
         self.song_length_ms = 0
+        self.play_started = False
         self.is_playing = False
         self.start_pos_ms = 0
 
@@ -38,13 +39,9 @@ class MusicPlayer:
         f = ('Times', 10)
         load_button = Button(controls_frame, text='Load', width=10, font=f, command=self.load)
         self.play_button = Button(controls_frame, text='Play', width=10, font=f, command=self.play)
-        pause_button = Button(controls_frame, text='Pause', width=10, font=f, command=self.pause)
-        stop_button = Button(controls_frame ,text='Stop', width=10, font=f, command=self.stop)
 
         load_button.grid(row=0, column=1, padx=10)
         self.play_button.grid(row=0, column=2, padx=10)
-        pause_button.grid(row=0, column=3, padx=10)
-        stop_button.grid(row=0, column=4, padx=10)
 
         self.slider = ttk.Scale(master_frame,
                                 from_=0,
@@ -94,38 +91,46 @@ class MusicPlayer:
             print("no file?")
 
     def _load_song_details(self, f):
-        self.is_playing = False
+        self.stop()
         self.music_file = f
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
         self.start_pos_ms = 0.0
+        self.play_started = False
 
     def play(self):
         self.cancel_slider_updates()
         if self.music_file is None:
             return
 
-        self.play_button.configure(text = 'XXXX')
-        mixer.music.load(self.music_file)
-        mixer.music.play()
-        self.start_pos_ms = 0
-        self.is_playing = True
-        self.update_slider()
+        if not self.play_started:
+            # First play, load and start.
+            self.play_started = True
+            self.play_button.configure(text = 'Pause')
+            mixer.music.load(self.music_file)
+            mixer.music.play()
+            self.is_playing = True
+            self.start_pos_ms = 0
+            self.update_slider()
 
-    def pause(self):
-        if self.is_playing:
+        elif self.is_playing:
+            # Play had already started, now we're pausing.
             mixer.music.pause()
             self.cancel_slider_updates()
             self.is_playing = False
+            self.play_button.configure(text = 'Play')
+
         else:
             mixer.music.unpause()
             self.is_playing = True
             self.update_slider()
+            self.play_button.configure(text = 'Pause')
 
     def stop(self):
         mixer.music.stop()
         self.is_playing = False
+        self.cancel_slider_updates()
 
 root = Tk()
 app= MusicPlayer(root)
