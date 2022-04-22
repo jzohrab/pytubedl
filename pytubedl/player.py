@@ -96,17 +96,6 @@ def add_song():
     # Add song to listbox
     song_box.insert(END, song)
 
-# Add many songs to playlist
-def add_many_songs():
-    songs = filedialog.askopenfilenames(initialdir='sample/', title="Choose A Song", filetypes=(("mp3 Files", "*.mp3"), ))    
-
-    # Loop thru song list and replace directory info and mp3
-    for song in songs:
-        # song = song.replace("C:/gui/audio/", "")
-        song = song.replace(".mp3", "")
-        # Insert into playlist
-        song_box.insert(END, song)
-
 # Play selected song
 def play():
     # Set Stopped Variable To False So Song Can Play
@@ -237,22 +226,6 @@ def previous_song():
     # Set Active Bar to Next Song
     song_box.selection_set(next_one, last=None)
 
-# Delete A Song
-def delete_song():
-    stop()
-    # Delete Currently Selected Song
-    song_box.delete(ANCHOR)
-    # Stop Music if it's playing
-    pygame.mixer.music.stop()
-
-# Delete All Songs from Playlist
-def delete_all_songs():
-    stop()
-    # Delete All Songs
-    song_box.delete(0, END)
-    # Stop Music if it's playing
-    pygame.mixer.music.stop()
-
 # Create Global Pause Variable
 global paused
 paused = False
@@ -279,6 +252,7 @@ def slide(x):
 
     pygame.mixer.music.load(song)
     pygame.mixer.music.play(loops=0, start=int(my_slider.get()))
+
 
 # Create Volume Function
 def volume(x):
@@ -365,14 +339,6 @@ root.config(menu=my_menu)
 add_song_menu = Menu(my_menu)
 my_menu.add_cascade(label="Add Songs", menu=add_song_menu)
 add_song_menu.add_command(label="Add One Song To Playlist", command=add_song)
-# Add Many Songs to playlist
-add_song_menu.add_command(label="Add Many Songs To Playlist", command=add_many_songs)
-
-# Create Delete Song Menu
-remove_song_menu = Menu(my_menu)
-my_menu.add_cascade(label="Remove Songs", menu=remove_song_menu)
-remove_song_menu.add_command(label="Delete A Song From Playlist", command=delete_song)
-remove_song_menu.add_command(label="Delete All Songs From Playlist", command=delete_all_songs)
 
 # Create Status Bar
 status_bar = Label(root, text='', bd=1, relief=GROOVE, anchor=E)
