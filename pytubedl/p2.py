@@ -11,9 +11,10 @@ class MusicPlayer:
         window.title('MP3 Player')
         window.geometry('600x400')
 
+        mixer.init()
+
         self.music_file = None
         self.song_length_ms = 0
-        self.mixer_init = False
         self.is_playing = False
         self.start_pos_ms = 0
 
@@ -78,9 +79,6 @@ class MusicPlayer:
             self.slider.after_cancel(self.slider_update_id)
 
     def update_slider(self):
-        if not self.mixer_init:
-            return
-
         if not self.is_playing:
             return
 
@@ -108,8 +106,6 @@ class MusicPlayer:
         if self.music_file is None:
             return
 
-        mixer.init()
-        self.mixer_init = True
         mixer.music.load(self.music_file)
         mixer.music.play()
         self.start_pos_ms = 0
@@ -117,8 +113,6 @@ class MusicPlayer:
         self.update_slider()
 
     def pause(self):
-        if not self.mixer_init:
-            return
         if self.is_playing:
             mixer.music.pause()
             self.cancel_slider_updates()
@@ -129,8 +123,6 @@ class MusicPlayer:
             self.update_slider()
 
     def stop(self):
-        if not self.mixer_init:
-            return
         mixer.music.stop()
         self.is_playing = False
 
