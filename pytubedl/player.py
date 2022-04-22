@@ -173,58 +173,6 @@ def stop():
     elif int(current_volume) >= 75 and int(current_volume) <= 100:
         volume_meter.config(image=vol4)
 
-# Play The Next Song in the playlist
-def next_song():
-    # Reset Slider and Status Bar
-    status_bar.config(text='')
-    my_slider.config(value=0)
-
-    # Get the current song tuple number
-    next_one = song_box.curselection() 
-    # Add one to the current song number
-    next_one = next_one[0]+1
-    #Grab song title from playlist
-    song = song_box.get(next_one)
-    # add directory structure and mp3 to song title
-    song = f'{song}.mp3'
-    # Load and play song
-    pygame.mixer.music.load(song)
-    pygame.mixer.music.play(loops=0)
-
-    # Clear active bar in playlist listbox
-    song_box.selection_clear(0, END)
-
-    # Activate new song bar
-    song_box.activate(next_one)
-
-    # Set Active Bar to Next Song
-    song_box.selection_set(next_one, last=None)
-
-# Play Previous Song In Playlist
-def previous_song():
-    # Reset Slider and Status Bar
-    status_bar.config(text='')
-    my_slider.config(value=0)
-    # Get the current song tuple number
-    next_one = song_box.curselection() 
-    # Add one to the current song number
-    next_one = next_one[0]-1
-    #Grab song title from playlist
-    song = song_box.get(next_one)
-    # add directory structure and mp3 to song title
-    song = f'{song}.mp3'
-    # Load and play song
-    pygame.mixer.music.load(song)
-    pygame.mixer.music.play(loops=0)
-
-    # Clear active bar in playlist listbox
-    song_box.selection_clear(0, END)
-
-    # Activate new song bar
-    song_box.activate(next_one)
-
-    # Set Active Bar to Next Song
-    song_box.selection_set(next_one, last=None)
 
 # Create Global Pause Variable
 global paused
@@ -319,8 +267,6 @@ volume_frame = LabelFrame(master_frame, text="Volume")
 volume_frame.grid(row=0, column=1, padx=30)
 
 # Create Player Control Buttons
-back_button = Button(controls_frame, image=back_btn_img, borderwidth=0, command=previous_song)
-forward_button = Button(controls_frame, image=forward_btn_img, borderwidth=0, command=next_song)
 play_button = Button(controls_frame, image=play_btn_img, borderwidth=0, command=play)
 pause_button = Button(controls_frame, image=pause_btn_img, borderwidth=0, command=lambda: pause(paused))
 stop_button =  Button(controls_frame, image=stop_btn_img, borderwidth=0, command=stop)
