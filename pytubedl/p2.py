@@ -9,7 +9,7 @@ class MusicPlayer:
 
     def __init__(self, window):
         window.title('MP3 Player')
-        window.geometry('500x400')
+        window.geometry('600x400')
 
         self.music_file = None
         self.song_length_ms = 0
@@ -61,35 +61,30 @@ class MusicPlayer:
 
 
     def slider_click(self, event):
-        print("sl click")
         self.user_changing_slider = True
-        if self.slider_update_id:
-            self.slider.after_cancel(self.slider_update_id)
-        print(self.slider.get())
+        self.cancel_slider_updates()
 
     def slider_unclick(self, event):
         self.user_changing_slider = False
         value_ms_f = float(self.slider.get())
-        print(f"sl UNclick, reloading at current point {value_ms_f}")
         mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
         self.start_pos_ms = value_ms_f
         if not self.is_playing:
             mixer.music.pause()
         self.update_slider()
 
+    def cancel_slider_updates(self):
+        if self.slider_update_id:
+            self.slider.after_cancel(self.slider_update_id)
+
     def update_slider(self):
-        print('entered update_slider')
         if not self.mixer_init:
             return
 
         if not self.is_playing:
-            print("no update needed")
             return
 
         current_pos_ms = mixer.music.get_pos()
-        print(f"current pos = {current_pos_ms} ms")
-        print(f"get= {self.slider.get()}")
-        # print(f"to= {self.slider.to} ???")
         self.slider.set(self.start_pos_ms + current_pos_ms)
         self.slider_update_id = self.slider.after(500, self.update_slider)
 
@@ -102,7 +97,6 @@ class MusicPlayer:
 
     def _load_song_details(self, f):
         self.is_playing = False
-        print(f"Got file {f}")
         self.music_file = f
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
@@ -110,8 +104,8 @@ class MusicPlayer:
         self.start_pos_ms = 0.0
 
     def play(self):
+        self.cancel_slider_updates()
         if self.music_file is None:
-            print("no file")
             return
 
         mixer.init()
@@ -120,7 +114,6 @@ class MusicPlayer:
         mixer.music.play()
         self.start_pos_ms = 0
         self.is_playing = True
-        print("set is_playing to True just now")
         self.update_slider()
 
     def pause(self):
@@ -128,6 +121,7 @@ class MusicPlayer:
             return
         if self.is_playing:
             mixer.music.pause()
+            self.cancel_slider_updates()
             self.is_playing = False
         else:
             mixer.music.unpause()
