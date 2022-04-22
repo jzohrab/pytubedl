@@ -310,6 +310,9 @@ master_frame.pack(pady=20)
 song_box = Listbox(master_frame, bg="black", fg="green", width=60, selectbackground="green", selectforeground="black")
 song_box.grid(row=0, column=0)
 
+# TODO remove this.
+song_box.insert(END, '/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds')
+
 # Define Player Control Button Images
 back_btn_img = PhotoImage(file='./images/back50.png')
 forward_btn_img =  PhotoImage(file='./images/forward50.png')
