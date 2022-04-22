@@ -3,24 +3,27 @@ from tkinter import filedialog
 from pygame import mixer
 
 class MusicPlayer:
-    def __init__(self, window ):
-        window.geometry('320x100'); window.title('Iris Player'); window.resizable(0,0)
-        f = ('Times', 10)
+    def __init__(self, window):
+        window.geometry('500x400')
+        window.title('MP3 Player')
+        # window.resizable(0,0)
 
+        f = ('Times', 10)
         play_img = PhotoImage(file='./images/play50.png')
         Load = Button(window, text='Load', width=10, font=f, command=self.load)
         Play = Button(window, text='Play', width=10, font=f, command=self.play)
         Pause = Button(window, text='Pause', width=10, font=f, command=self.pause)
         Stop = Button(window ,text='Stop', width=10, font=f, command=self.stop)
 
+        self.music_file = None
+        self.mixer_init = False
+        self.playing_state = False
+
         Load.place(x=0,y=20)
         Play.place(x=110,y=20)
         Pause.place(x=220,y=20)
         Stop.place(x=110,y=60)
 
-        self.music_file = None
-        self.mixer_init = False
-        self.playing_state = False
 
     def load(self):
         self.music_file = filedialog.askopenfilename()
