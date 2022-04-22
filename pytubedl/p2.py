@@ -77,10 +77,17 @@ class MusicPlayer:
             self.slider.after_cancel(self.slider_update_id)
 
     def update_slider(self):
-        if self.state is MusicPlayer.State.PLAYING:
-            current_pos_ms = mixer.music.get_pos()
-            self.slider.set(self.start_pos_ms + current_pos_ms)
+        if self.state is not MusicPlayer.State.PLAYING:
+            return
+        current_pos_ms = mixer.music.get_pos()
+        slider_pos = self.start_pos_ms + current_pos_ms
+        self.slider.set(slider_pos)
+        if slider_pos < self.song_length_ms:
             self.slider_update_id = self.slider.after(50, self.update_slider)
+        else:
+            self.cancel_slider_updates()
+            self._pause()
+
 
     def load(self):
         f = filedialog.askopenfilename()
@@ -113,10 +120,7 @@ class MusicPlayer:
             self.update_slider()
 
         elif self.state is MusicPlayer.State.PLAYING:
-            mixer.music.pause()
-            self.cancel_slider_updates()
-            self.state = MusicPlayer.State.PAUSED
-            self.play_btn.configure(text = 'Play')
+            self._pause()
 
         elif self.state is MusicPlayer.State.PAUSED:
             mixer.music.unpause()
@@ -127,6 +131,12 @@ class MusicPlayer:
         else:
             # Should never get here, but in case I missed something ...
             raise RuntimeError('??? weird state?')
+
+    def _pause(self):
+        mixer.music.pause()
+        self.cancel_slider_updates()
+        self.state = MusicPlayer.State.PAUSED
+        self.play_btn.configure(text = 'Play')
 
     def stop(self):
         mixer.music.stop()
