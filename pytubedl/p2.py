@@ -37,12 +37,12 @@ class MusicPlayer:
 
         f = ('Times', 10)
         load_button = Button(controls_frame, text='Load', width=10, font=f, command=self.load)
-        play_button = Button(controls_frame, text='Play', width=10, font=f, command=self.play)
+        self.play_button = Button(controls_frame, text='Play', width=10, font=f, command=self.play)
         pause_button = Button(controls_frame, text='Pause', width=10, font=f, command=self.pause)
         stop_button = Button(controls_frame ,text='Stop', width=10, font=f, command=self.stop)
 
         load_button.grid(row=0, column=1, padx=10)
-        play_button.grid(row=0, column=2, padx=10)
+        self.play_button.grid(row=0, column=2, padx=10)
         pause_button.grid(row=0, column=3, padx=10)
         stop_button.grid(row=0, column=4, padx=10)
 
@@ -106,6 +106,7 @@ class MusicPlayer:
         if self.music_file is None:
             return
 
+        self.play_button.configure(text = 'XXXX')
         mixer.music.load(self.music_file)
         mixer.music.play()
         self.start_pos_ms = 0
