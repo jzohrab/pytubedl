@@ -66,8 +66,9 @@ class MusicPlayer:
 
     def slider_unclick(self, event):
         value_ms_f = float(self.slider.get())
-        mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
         self.start_pos_ms = value_ms_f
+        # print(f"Updating start pos to {value_ms_f}")
+        mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
         if self.state is MusicPlayer.State.PAUSED:
             mixer.music.pause()
         self.update_slider()
@@ -81,10 +82,16 @@ class MusicPlayer:
             return
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
+        if (current_pos_ms == -1):
+            # print("reached end")
+            slider_pos = self.song_length_ms
+        # print(f"curr pos={current_pos_ms}; sl pos= {slider_pos}, len={self.song_length_ms}")
         self.slider.set(slider_pos)
         if slider_pos < self.song_length_ms:
             self.slider_update_id = self.slider.after(50, self.update_slider)
         else:
+            # print(f"Reached the end, setting slider to {self.song_length_ms}")
+            self.slider.set(self.song_length_ms)
             self.cancel_slider_updates()
             self._pause()
 
