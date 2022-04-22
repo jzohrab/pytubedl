@@ -17,9 +17,11 @@ pygame.mixer.init()
 
 # Grab Song Length Time Info
 def play_time():
+    print("entering play_time()")
     # Check for double timing
-    if stopped:
+    if stopped or paused:
         return 
+
     # Grab Current Song Elapsed Time
     current_time = pygame.mixer.music.get_pos() / 1000
 
@@ -43,8 +45,12 @@ def play_time():
     converted_song_length = time.strftime('%M:%S', time.gmtime(song_length))
 
     # Increase current time by 1 second
+    # ??? WHY ???
     current_time +=1
-    
+
+    my_slider.config(to = song_length, value=current_time)
+    return
+
     if int(my_slider.get()) == int(song_length):
         status_bar.config(text=f'Time Elapsed: {converted_song_length}  of  {converted_song_length}  ')
     elif paused:
@@ -70,19 +76,11 @@ def play_time():
         my_slider.config(value=next_time)
 
 
-
-
-
-
     # Output time to status bar
     #status_bar.config(text=f'Time Elapsed: {converted_current_time}  of  {converted_song_length}  ')
 
     # Update slider position value to current song position...
-    #my_slider.config(value=int(current_time))
-    
-    
-    # update time
-    status_bar.after(1000, play_time)
+    my_slider.config(value=int(current_time))
 
 
 #Add Song Function
@@ -108,23 +106,13 @@ def play():
     pygame.mixer.music.play(loops=0)
 
     # Call the play_time function to get song length
+    print("in play")
     play_time()
 
-    # Update Slider To position
-    #slider_position = int(song_length)
-    #my_slider.config(to=slider_position, value=0)
+    # my_slider.config(to= song_length, value=0)
     
-    # Get current volume
-    #current_volume = pygame.mixer.music.get_volume()
-    #slider_label.config(text=current_volume * 100)
-
-    # Get current Volume
     current_volume = pygame.mixer.music.get_volume()
-    # Times by 100 to make it easier to work with
     current_volume = current_volume * 100
-    #slider_label.config(text=current_volume * 100)
-
-    # Change Volume Meter Picture
     if int(current_volume) < 1:
         volume_meter.config(image=vol0)
     elif int(current_volume) > 0 and int(current_volume) <= 25:
@@ -236,8 +224,6 @@ song_box.grid(row=0, column=0)
 song_box.insert(END, '/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds')
 
 # Define Player Control Button Images
-back_btn_img = PhotoImage(file='./images/back50.png')
-forward_btn_img =  PhotoImage(file='./images/forward50.png')
 play_btn_img =  PhotoImage(file='./images/play50.png')
 pause_btn_img =  PhotoImage(file='./images/pause50.png')
 stop_btn_img =  PhotoImage(file='./images/stop50.png')
@@ -271,8 +257,6 @@ play_button = Button(controls_frame, image=play_btn_img, borderwidth=0, command=
 pause_button = Button(controls_frame, image=pause_btn_img, borderwidth=0, command=lambda: pause(paused))
 stop_button =  Button(controls_frame, image=stop_btn_img, borderwidth=0, command=stop)
 
-back_button.grid(row=0, column=0, padx=10)
-forward_button.grid(row=0, column=1, padx=10)
 play_button.grid(row=0, column=2, padx=10)
 pause_button.grid(row=0, column=3, padx=10)
 stop_button.grid(row=0, column=4, padx=10)
@@ -297,6 +281,8 @@ my_slider.grid(row=2, column=0, pady=10)
 # Create Volume Slider
 volume_slider = ttk.Scale(volume_frame, from_=0, to=1, orient=VERTICAL, value=1, command=volume, length=125)
 volume_slider.pack(pady=10)
+
+root.after(1000, play_time)
 
 
 # Create Temporary Slider Label
