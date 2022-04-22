@@ -1,21 +1,20 @@
 from tkinter import *
 from tkinter import filedialog
 from pygame import mixer
+from mutagen.mp3 import MP3
 
 import tkinter.ttk as ttk
 
 class MusicPlayer:
+
     def __init__(self, window):
         window.title('MP3 Player')
         window.geometry('500x400')
-        # window.resizable(0,0)
-
-        f = ('Times', 10)
-        play_img = PhotoImage(file='./images/play50.png')
 
         self.music_file = None
+        self.song_length = 0
         self.mixer_init = False
-        self.playing_state = False
+        self.is_playing = False
 
         # Layout
         master_frame = Frame(window)
@@ -31,6 +30,7 @@ class MusicPlayer:
         controls_frame = Frame(master_frame)
         controls_frame.grid(row=1, column=0, pady=20)
 
+        f = ('Times', 10)
         load_button = Button(controls_frame, text='Load', width=10, font=f, command=self.load)
         play_button = Button(controls_frame, text='Play', width=10, font=f, command=self.play)
         pause_button = Button(controls_frame, text='Pause', width=10, font=f, command=self.pause)
@@ -41,45 +41,80 @@ class MusicPlayer:
         pause_button.grid(row=0, column=3, padx=10)
         stop_button.grid(row=0, column=4, padx=10)
 
-        my_slider = ttk.Scale(master_frame,
-                              from_=0,
-                              to=100,
-                              orient=HORIZONTAL,
-                              value=0,
-                              command=self.slide,
-                              length=360)
-        my_slider.grid(row=2, column=0, pady=10)
+        self.slider = ttk.Scale(master_frame,
+                                from_=0,
+                                to=100,
+                                orient=HORIZONTAL,
+                                value=0,
+                                command=self.slide,
+                                length=360)
+        self.slider.grid(row=2, column=0, pady=10)
+
+        # during testing
+        print("TEST HACK LOAD SONG")
+        self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
 
     def slide(self, v):
+        # self.is_playing = False
         print(f"todo, slider position = {v}")
 
+    def update_slider(self):
+        if not self.is_playing:
+            print("no update needed")
+            return
+
+        current_pos = mixer.music.get_pos() / 1000
+        print(f"current pos = {current_pos}")
+        print(f"get= {self.slider.get()}")
+        # print(f"to= {self.slider.to} ???")
+        self.slider.set(current_pos)
+        self.slider.after(500, self.update_slider)
+
     def load(self):
-        self.music_file = filedialog.askopenfilename()
+        f = filedialog.askopenfilename()
+        if f:
+            self._load_song_details(f)
+        else:
+            print("no file?")
+
+    def _load_song_details(self, f):
+        self.is_playing = False
+        print(f"Got file {f}")
+        self.music_file = f
+        song_mut = MP3(f)
+        self.song_length = song_mut.info.length
+        self.slider.config(to = self.song_length, value=0)
 
     def play(self):
         if self.music_file is None:
             print("no file")
+            return
 
         mixer.init()
         self.mixer_init = True
         mixer.music.load(self.music_file)
         mixer.music.play()
+        self.is_playing = True
+        print("set is_playing to True just now")
+        self.update_slider()
 
     def pause(self):
         if not self.mixer_init:
             return
-        if not self.playing_state:
+        if self.is_playing:
             mixer.music.pause()
-            self.playing_state=True
+            self.is_playing = False
         else:
             mixer.music.unpause()
-            self.playing_state = False
+            self.is_playing = True
+            self.update_slider()
 
     def stop(self):
         if not self.mixer_init:
             return
         mixer.music.stop()
+        self.is_playing = False
 
 root = Tk()
 app= MusicPlayer(root)
