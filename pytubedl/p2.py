@@ -56,16 +56,30 @@ class MusicPlayer:
 
 
     def slide(self, v):
-        # self.is_playing = False
-        print(f"todo, slider position = {v}")
+        # This method is called when the user changes the slider,
+        # and ALSO from the program loop update_slider().  So,
+        # if the user changes the current point, re-load the song.
+        current_pos = mixer.music.get_pos()
+        f = float(v)
+        diff = abs(current_pos - f)
+        if diff > 500:
+            print(f"suspect user updated, diff = {diff}")
+            # mixer.music.set_pos(f / 1000.0)  # can't set_pos
+            # mixer.music.load(self.music_file)
+            mixer.music.play(loops = 0, start = (f / 1000.0))
+            if not self.is_playing:
+                mixer.music.pause()
+            self.update_slider()
+        else:
+            print(f"not user updated?, diff = {diff}")
 
     def update_slider(self):
         if not self.is_playing:
             print("no update needed")
             return
 
-        current_pos = mixer.music.get_pos() / 1000
-        print(f"current pos = {current_pos}")
+        current_pos = mixer.music.get_pos()
+        print(f"current pos = {current_pos} ms")
         print(f"get= {self.slider.get()}")
         # print(f"to= {self.slider.to} ???")
         self.slider.set(current_pos)
@@ -83,7 +97,7 @@ class MusicPlayer:
         print(f"Got file {f}")
         self.music_file = f
         song_mut = MP3(f)
-        self.song_length = song_mut.info.length
+        self.song_length = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length, value=0)
 
     def play(self):
