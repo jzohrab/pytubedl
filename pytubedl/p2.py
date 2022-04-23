@@ -1,3 +1,19 @@
+#####
+# Clip player
+#
+# TODO:
+# - 'add bookmark' to list, with optional note?
+# - click bookmark to reset the slider
+# - 'delete bookmark' ?
+# - define clip (1 and 2 for start and end)
+# - 'add clip' to list, with optional note?
+# - transcribe clip w/ vosk
+# - export mp3 file to disk
+# - export card and transcription to anki
+#
+###
+
+
 from tkinter import *
 from tkinter import filedialog
 from pygame import mixer
@@ -60,7 +76,7 @@ class MusicPlayer:
         self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
         self.slider_lbl = Label(master_frame, text='')
-        self.slider_lbl.grid(row=3, column=0, pady=10)
+        self.slider_lbl.grid(row=3, column=0, pady=2)
 
         window.bind_all('<Key>', self.handle_key)
 
