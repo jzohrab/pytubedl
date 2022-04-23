@@ -107,7 +107,7 @@ class MusicPlayer:
         total_seconds = ms / 1000.0
         mins = int(total_seconds) // 60
         secs = total_seconds % 60
-        return '{:02d}:{:02.1f}'.format(mins, secs)
+        return '{:02d}m{:02.1f}s'.format(mins, secs)
 
     def update_slider(self):
         current_pos_ms = mixer.music.get_pos()
