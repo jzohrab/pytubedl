@@ -59,10 +59,20 @@ class MusicPlayer:
         self.slider.bind('<Button-1>', self.slider_click)
         self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
+        window.bind_all('<Key>', self.handle_key)
+
         # during testing
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
+
+    def handle_key(self, event):
+        k = event.keysym
+        if k == 'q':
+            self.quit()
+        elif k == 'space':
+            self.play_pause()
+        # 'plus', 'Return', 'Right', 'Left' etc.
 
     def slider_click(self, event):
         self.cancel_slider_updates()
