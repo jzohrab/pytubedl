@@ -74,13 +74,14 @@ class MusicPlayer:
             self.play_pause()
         elif k == 'Left':
             curr_value_ms_f = float(self.slider.get())
-            new_value_ms = curr_value_ms_f - 5000
+            new_value_ms = curr_value_ms_f - 500
             if (new_value_ms < 0):
                 new_value_ms = 0
             self.reposition_slider(new_value_ms)
         # 'plus', 'Return', 'Right', 'Left' etc.
 
     def slider_click(self, event):
+        """User is dragging the slider now, so don't update it."""
         self.cancel_slider_updates()
 
     def slider_unclick(self, event):
@@ -100,8 +101,6 @@ class MusicPlayer:
             self.slider.after_cancel(self.slider_update_id)
 
     def update_slider(self):
-        if self.state is not MusicPlayer.State.PLAYING:
-            return
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
         if (current_pos_ms == -1):
