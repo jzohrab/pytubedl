@@ -16,6 +16,7 @@ class MusicPlayer:
     def __init__(self, window):
         window.title('MP3 Player')
         window.geometry('600x400')
+        self.window = window
 
         mixer.init()
 
@@ -45,6 +46,8 @@ class MusicPlayer:
         load_btn.grid(row=0, column=1, padx=10)
         self.play_btn = Button(ctl_frame, text='Play', width=10, font=f, command=self.play_pause)
         self.play_btn.grid(row=0, column=2, padx=10)
+        quit_btn = Button(ctl_frame, text='Quit', width=10, font=f, command=self.quit)
+        quit_btn.grid(row=0, column=3, padx=10)
 
         self.slider = ttk.Scale(master_frame,
                                 from_=0,
@@ -148,6 +151,10 @@ class MusicPlayer:
     def stop(self):
         mixer.music.stop()
         self.cancel_slider_updates()
+
+    def quit(self):
+        mixer.music.stop()
+        self.window.destroy()
 
 root = Tk()
 app= MusicPlayer(root)
