@@ -72,6 +72,12 @@ class MusicPlayer:
             self.quit()
         elif k == 'space':
             self.play_pause()
+        elif k == 'Left':
+            curr_value_ms_f = float(self.slider.get())
+            new_value_ms = curr_value_ms_f - 5000
+            if (new_value_ms < 0):
+                new_value_ms = 0
+            self.reposition_slider(new_value_ms)
         # 'plus', 'Return', 'Right', 'Left' etc.
 
     def slider_click(self, event):
@@ -79,6 +85,9 @@ class MusicPlayer:
 
     def slider_unclick(self, event):
         value_ms_f = float(self.slider.get())
+        self.reposition_slider(value_ms_f)
+
+    def reposition_slider(self, value_ms_f):
         self.start_pos_ms = value_ms_f
         # print(f"Updating start pos to {value_ms_f}")
         mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
