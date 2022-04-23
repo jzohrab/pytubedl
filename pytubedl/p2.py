@@ -59,6 +59,9 @@ class MusicPlayer:
         self.slider.bind('<Button-1>', self.slider_click)
         self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
+        self.slider_lbl = Label(master_frame, text='')
+        self.slider_lbl.grid(row=3, column=0, pady=10)
+
         window.bind_all('<Key>', self.handle_key)
 
         # during testing
@@ -100,19 +103,26 @@ class MusicPlayer:
         if self.slider_update_id:
             self.slider.after_cancel(self.slider_update_id)
 
+    def _time_string(self, ms):
+        total_seconds = ms / 1000.0
+        mins = int(total_seconds) // 60
+        secs = total_seconds % 60
+        return '{:02d}:{:02.1f}'.format(mins, secs)
+
     def update_slider(self):
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
-        if (current_pos_ms == -1):
-            # print("reached end")
+        if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
+            # Mixer.music goes to -1 when it reaches the end of the file.
             slider_pos = self.song_length_ms
-        # print(f"curr pos={current_pos_ms}; sl pos= {slider_pos}, len={self.song_length_ms}")
+
         self.slider.set(slider_pos)
+        self.slider_lbl.configure(text=self._time_string(slider_pos))
+
         if slider_pos < self.song_length_ms:
             self.slider_update_id = self.slider.after(50, self.update_slider)
         else:
-            # print(f"Reached the end, setting slider to {self.song_length_ms}")
-            self.slider.set(self.song_length_ms)
+            # Reached the end, stop updating.
             self.cancel_slider_updates()
             self._pause()
 
