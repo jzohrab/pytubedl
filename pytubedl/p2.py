@@ -22,6 +22,35 @@ from mutagen.mp3 import MP3
 from enum import Enum
 import tkinter.ttk as ttk
 
+
+class PopupWindow(object):
+    """Stub popup window, to be used for bookmark/clip editing."""
+
+    def __init__(self, parent):
+        # The "return value" of the dialog,
+        # entered by user in self.entry Entry box.
+        self.data = None
+
+        self.root=Toplevel(parent)
+        self.root.protocol('WM_DELETE_WINDOW', self.ok)
+
+        self.entry = Entry(self.root)
+        self.entry.pack()
+        self.ok_btn = Button(self.root, text="ok", command=self.ok)
+        self.ok_btn.pack()
+
+        # Modal window.
+        # Wait for visibility or grab_set doesn't seem to work.
+        self.root.wait_visibility()
+        self.root.grab_set()
+        self.root.transient(parent)
+
+    def ok(self):
+        self.root.grab_release()
+        self.data = self.entry.get()
+        self.root.destroy()
+
+
 class MusicPlayer:
 
     @staticmethod
@@ -120,6 +149,9 @@ class MusicPlayer:
         quit_btn = Button(ctl_frame, text='Quit', width=10, font=f, command=self.quit)
         quit_btn.grid(row=0, column=4, padx=10)
 
+        button_bonus = Button(ctl_frame, text="Window", width=10, font=f, command=self.popup_window)
+        button_bonus.grid(row=0, column=5, padx=10)
+
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=2, column=0, pady=20)
         self.slider = ttk.Scale(
@@ -136,12 +168,19 @@ class MusicPlayer:
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
 
-        window.bind_all('<Key>', self.handle_key)
+        window.bind('<Key>', self.handle_key)
 
         # during testing
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
+    def popup_window(self):
+        d = PopupWindow(self.window)
+        print('opened login window, about to wait')
+        self.window.wait_window(d.root)
+        print('hello back from popping up')
+        print(f'got data: {d.data}')
+        d.root.grab_release()
 
     def reload_bookmark_list(self):
         self.bookmarks_lst.delete(0, END)
@@ -189,6 +228,7 @@ class MusicPlayer:
 
     def handle_key(self, event):
         k = event.keysym
+        print(f'got key: {k}')
         if k == 'q':
             self.quit()
         elif k == 'm':
@@ -320,5 +360,5 @@ class MusicPlayer:
         self.window.destroy()
 
 root = Tk()
-app= MusicPlayer(root)
+app = MusicPlayer(root)
 root.mainloop()
