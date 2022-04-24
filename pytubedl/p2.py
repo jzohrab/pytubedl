@@ -47,12 +47,25 @@ class MusicPlayer:
         master_frame = Frame(window)
         master_frame.pack(pady=20)
 
-        song_box = Listbox(master_frame,
-                           bg="black", fg="green",
-                           width=60,
-                           selectbackground="green",
-                           selectforeground="black")
-        song_box.grid(row=0, column=0)
+        bk_frame = Frame(master_frame)
+        bk_frame.grid(row=0, column=0, pady=20)
+
+        self.bookmarks = Listbox(
+            bk_frame,
+            width=30,
+            selectbackground="yellow",
+            selectforeground="black")
+        self.bookmarks.grid(row=0, column=1)
+
+        scrollbar = ttk.Scrollbar(bk_frame, orient= 'vertical')
+        # # scrollbar.pack(side= RIGHT, fill= Y)
+        scrollbar.grid(row=0, column=2, sticky='NS')
+        # # self.bookmarks.pack(expand=True, fill=Y)
+        self.bookmarks.config(yscrollcommand= scrollbar.set)
+        scrollbar.config(command= self.bookmarks.yview)
+
+        for i in range(1, 20):
+            self.add_bookmark(i)
 
         ctl_frame = Frame(master_frame)
         ctl_frame.grid(row=1, column=0, pady=20)
@@ -65,18 +78,21 @@ class MusicPlayer:
         quit_btn = Button(ctl_frame, text='Quit', width=10, font=f, command=self.quit)
         quit_btn.grid(row=0, column=3, padx=10)
 
-        self.slider = ttk.Scale(master_frame,
-                                from_=0,
-                                to=100,
-                                orient=HORIZONTAL,
-                                value=0,
-                                length=360)
-        self.slider.grid(row=2, column=0, pady=10)
+        slider_frame = Frame(master_frame)
+        slider_frame.grid(row=2, column=0, pady=20)
+        self.slider = ttk.Scale(
+            slider_frame,
+            from_=0,
+            to=100,
+            orient=HORIZONTAL,
+            value=0,
+            length=360)
+        self.slider.grid(row=0, column=1, pady=10)
         self.slider.bind('<Button-1>', self.slider_click)
         self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
-        self.slider_lbl = Label(master_frame, text='')
-        self.slider_lbl.grid(row=3, column=0, pady=2)
+        self.slider_lbl = Label(slider_frame, text='')
+        self.slider_lbl.grid(row=1, column=1, pady=2)
 
         window.bind_all('<Key>', self.handle_key)
 
@@ -84,6 +100,8 @@ class MusicPlayer:
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
+    def add_bookmark(self, m):
+        self.bookmarks.insert(END, '{:d}'.format(m))
 
     def handle_key(self, event):
         k = event.keysym
