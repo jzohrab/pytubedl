@@ -133,7 +133,6 @@ class MusicPlayer:
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
 
-    # TODO - clear out the listbox on load of new song
     def reload_bookmark_list(self):
         self.bookmarks_lst.delete(0, END)
         for b in self.bookmarks:
