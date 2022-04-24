@@ -55,6 +55,7 @@ class MusicPlayer:
         def position_ms(self, v):
             self._pos_ms = v
 
+        # TODO remove this.
         def placeholder(self):
             """Demo method, what to do when selected."""
             return f"PLACEHOLDER for {self.display()}"
@@ -252,7 +253,6 @@ class MusicPlayer:
             if slider_pos < self.song_length_ms:
                 old_update_id = self.slider_update_id
                 self.slider_update_id = self.slider.after(50, self.update_slider)
-                print(f"after_id {old_update_id} replaced, now {self.slider_update_id}")
             else:
                 # Reached the end, stop updating.
                 self._pause()
