@@ -2,11 +2,12 @@
 # Clip player
 #
 # TODO:
-# - 'add bookmark' to list, with optional note?
-# - click bookmark to reset the slider
-# - 'delete bookmark' ?
-# - define clip (1 and 2 for start and end)
-# - 'add clip' to list, with optional note?
+# - 'delete bookmark' (useful for duplicates)
+# - maybe "add note" to bookmark?
+# - ensure can't delete <Full Track>
+# - change bookmark position
+# - add "end clip" for bookmark
+# - can't add "end clip" for <Full Track>
 # - transcribe clip w/ vosk
 # - export mp3 file to disk
 # - export card and transcription to anki
@@ -53,6 +54,13 @@ class MusicPlayer:
         def placeholder(self):
             """Demo method, what to do when selected."""
             return f"PLACEHOLDER for {self.display()}"
+
+
+    class FullTrackBookmark(Bookmark):
+        def __init__(self):
+            super().__init__(0)
+        def display(self):
+            return "<Full Track>"
 
 
     def __init__(self, window):
@@ -124,6 +132,7 @@ class MusicPlayer:
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
+
     # TODO - clear out the listbox on load of new song
     def reload_bookmark_list(self):
         self.bookmarks_lst.delete(0, END)
@@ -181,7 +190,7 @@ class MusicPlayer:
         self.start_pos_ms = value_ms_f
         # print(f"Updating start pos to {value_ms_f}")
         mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
-        if self.state is MusicPlayer.State.PAUSED:
+        if self.state is not MusicPlayer.State.PLAYING:
             mixer.music.pause()
         self.update_slider()
 
@@ -219,10 +228,15 @@ class MusicPlayer:
     def _load_song_details(self, f):
         self.stop()
         self.music_file = f
+        mixer.music.load(f)
+
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
         self.start_pos_ms = 0.0
+
+        self.bookmarks = [ MusicPlayer.FullTrackBookmark() ]
+        self.reload_bookmark_list()
         self.state = MusicPlayer.State.LOADED
 
     def play_pause(self):
@@ -233,7 +247,6 @@ class MusicPlayer:
         if self.state is MusicPlayer.State.LOADED:
             # First play, load and start.
             self.play_btn.configure(text = 'Pause')
-            mixer.music.load(self.music_file)
             mixer.music.play()
             self.state = MusicPlayer.State.PLAYING
             self.start_pos_ms = 0
