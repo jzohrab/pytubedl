@@ -154,12 +154,21 @@ class MusicPlayer:
         elif k == 'm':
             self.add_bookmark(float(self.slider.get()))
         elif k == 'p':
+            # Previously, I had 'space' handle start/stop, but that
+            # also triggers a re-selection of the currently selected
+            # bookmark.
             self.play_pause()
         elif k == 'Left':
             curr_value_ms_f = float(self.slider.get())
             new_value_ms = curr_value_ms_f - 500
             if (new_value_ms < 0):
                 new_value_ms = 0
+            self.reposition_slider(new_value_ms)
+        elif k == 'Right':
+            curr_value_ms_f = float(self.slider.get())
+            new_value_ms = curr_value_ms_f + 500
+            if (new_value_ms > self.song_length_ms):
+                new_value_ms = self.song_length_ms
             self.reposition_slider(new_value_ms)
         # 'plus', 'Return', 'Right', 'Left' etc.
 
