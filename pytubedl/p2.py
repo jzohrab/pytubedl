@@ -59,14 +59,17 @@ class PopupWindow(object):
         self.root.destroy()
 
 
-class MusicPlayer:
+class TimeUtils:
 
     @staticmethod
-    def _time_string(ms):
+    def time_string(ms):
         total_seconds = ms / 1000.0
         mins = int(total_seconds) // 60
         secs = total_seconds % 60
         return '{:02d}m{:04.1f}s'.format(mins, secs)
+
+
+class MainWindow:
 
     class State(Enum):
         NEW = 0
@@ -81,7 +84,7 @@ class MusicPlayer:
 
         def display(self):
             """String description of this for display in list boxes."""
-            return f"Bookmark {MusicPlayer._time_string(self._pos_ms)}"
+            return f"Bookmark {TimeUtils.time_string(self._pos_ms)}"
 
         @property
         def position_ms(self):
@@ -112,7 +115,7 @@ class MusicPlayer:
 
         mixer.init()
 
-        self.state = MusicPlayer.State.NEW
+        self.state = MainWindow.State.NEW
         self.music_file = None
         self.song_length_ms = 0
 
@@ -210,7 +213,7 @@ class MusicPlayer:
             self.bookmarks_lst.select_set(selected_index)
 
     def add_bookmark(self, m):
-        b = MusicPlayer.Bookmark(m)
+        b = MainWindow.Bookmark(m)
         self.bookmarks.append(b)
         self.bookmarks_lst.insert(END, b.display())
 
@@ -292,7 +295,7 @@ class MusicPlayer:
         self.update_selected_bookmark(v)
 
         mixer.music.play(loops = 0, start = (v / 1000.0))
-        if self.state is not MusicPlayer.State.PLAYING:
+        if self.state is not MainWindow.State.PLAYING:
             mixer.music.pause()
         self.update_slider()
 
@@ -308,9 +311,9 @@ class MusicPlayer:
             slider_pos = self.song_length_ms
 
         self.slider.set(slider_pos)
-        self.slider_lbl.configure(text=MusicPlayer._time_string(slider_pos))
+        self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
 
-        if self.state is MusicPlayer.State.PLAYING:
+        if self.state is MainWindow.State.PLAYING:
             if slider_pos < self.song_length_ms:
                 old_update_id = self.slider_update_id
                 self.slider_update_id = self.slider.after(50, self.update_slider)
@@ -336,29 +339,29 @@ class MusicPlayer:
         self.slider.config(to = self.song_length_ms, value=0)
         self.start_pos_ms = 0.0
 
-        self.bookmarks = [ MusicPlayer.FullTrackBookmark() ]
+        self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
-        self.state = MusicPlayer.State.LOADED
+        self.state = MainWindow.State.LOADED
 
     def play_pause(self):
         self.cancel_slider_updates()
         if self.music_file is None:
             return
 
-        if self.state is MusicPlayer.State.LOADED:
+        if self.state is MainWindow.State.LOADED:
             # First play, load and start.
             self.play_btn.configure(text = 'Pause')
             mixer.music.play()
-            self.state = MusicPlayer.State.PLAYING
+            self.state = MainWindow.State.PLAYING
             self.start_pos_ms = 0
             self.update_slider()
 
-        elif self.state is MusicPlayer.State.PLAYING:
+        elif self.state is MainWindow.State.PLAYING:
             self._pause()
 
-        elif self.state is MusicPlayer.State.PAUSED:
+        elif self.state is MainWindow.State.PAUSED:
             mixer.music.unpause()
-            self.state = MusicPlayer.State.PLAYING
+            self.state = MainWindow.State.PLAYING
             self.update_slider()
             self.play_btn.configure(text = 'Pause')
 
@@ -369,7 +372,7 @@ class MusicPlayer:
     def _pause(self):
         mixer.music.pause()
         self.cancel_slider_updates()
-        self.state = MusicPlayer.State.PAUSED
+        self.state = MainWindow.State.PAUSED
         self.play_btn.configure(text = 'Play')
 
     def stop(self):
@@ -381,5 +384,5 @@ class MusicPlayer:
         self.window.destroy()
 
 root = Tk()
-app = MusicPlayer(root)
+app = MainWindow(root)
 root.mainloop()
