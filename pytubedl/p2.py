@@ -23,11 +23,32 @@ import tkinter.ttk as ttk
 
 class MusicPlayer:
 
+    @staticmethod
+    def _time_string(ms):
+        total_seconds = ms / 1000.0
+        mins = int(total_seconds) // 60
+        secs = total_seconds % 60
+        return '{:02d}m{:02.1f}s'.format(mins, secs)
+
     class State(Enum):
         NEW = 0
         LOADED = 1
         PLAYING = 2
         PAUSED = 3
+
+    class Bookmark:
+        """A bookmark or clip item, stored in bookmarks listbox"""
+        def __init__(self, pos_ms):
+            self.pos_ms = pos_ms
+
+        def display(self):
+            """String description of this for display in list boxes."""
+            return f"Bookmark {MusicPlayer._time_string(self.pos_ms)}"
+
+        def placeholder(self):
+            """Demo method, what to do when selected."""
+            return f"PLACEHOLDER for {self.display()}"
+
 
     def __init__(self, window):
         window.title('MP3 Player')
@@ -50,22 +71,24 @@ class MusicPlayer:
         bk_frame = Frame(master_frame)
         bk_frame.grid(row=0, column=0, pady=20)
 
-        self.bookmarks = Listbox(
+        # The bookmarks saved during play.
+        self.bookmarks = []
+        self.bookmarks_lst = Listbox(
             bk_frame,
             width=30,
             selectbackground="yellow",
             selectforeground="black")
-        self.bookmarks.grid(row=0, column=1)
+        self.bookmarks_lst.grid(row=0, column=1)
+        self.bookmarks_lst.bind('<<ListboxSelect>>', self.on_bookmark_select)
 
         scrollbar = ttk.Scrollbar(bk_frame, orient= 'vertical')
         # # scrollbar.pack(side= RIGHT, fill= Y)
         scrollbar.grid(row=0, column=2, sticky='NS')
-        # # self.bookmarks.pack(expand=True, fill=Y)
-        self.bookmarks.config(yscrollcommand= scrollbar.set)
-        scrollbar.config(command= self.bookmarks.yview)
+        self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
+        scrollbar.config(command= self.bookmarks_lst.yview)
 
-        for i in range(1, 20):
-            self.add_bookmark(i)
+        for i in range(1, 10):
+            self.add_bookmark(i * 1000)
 
         ctl_frame = Frame(master_frame)
         ctl_frame.grid(row=1, column=0, pady=20)
@@ -101,7 +124,18 @@ class MusicPlayer:
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
     def add_bookmark(self, m):
-        self.bookmarks.insert(END, '{:d}'.format(m))
+        b = MusicPlayer.Bookmark(m)
+        self.bookmarks.append(b)
+        self.bookmarks_lst.insert(END, b.display())
+
+    def on_bookmark_select(self, event):
+        lst = self.bookmarks_lst
+        # Note here that Tkinter passes an event object to handler
+        if len(lst.curselection()) == 0:
+            return
+        index = int(lst.curselection()[0])
+        b = self.bookmarks[index]
+        print (f'bookmark selected: {(index, b.placeholder())}')
 
     def handle_key(self, event):
         k = event.keysym
@@ -137,12 +171,6 @@ class MusicPlayer:
         if self.slider_update_id:
             self.slider.after_cancel(self.slider_update_id)
 
-    def _time_string(self, ms):
-        total_seconds = ms / 1000.0
-        mins = int(total_seconds) // 60
-        secs = total_seconds % 60
-        return '{:02d}m{:02.1f}s'.format(mins, secs)
-
     def update_slider(self):
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
@@ -151,7 +179,7 @@ class MusicPlayer:
             slider_pos = self.song_length_ms
 
         self.slider.set(slider_pos)
-        self.slider_lbl.configure(text=self._time_string(slider_pos))
+        self.slider_lbl.configure(text=MusicPlayer._time_string(slider_pos))
 
         if slider_pos < self.song_length_ms:
             self.slider_update_id = self.slider.after(50, self.update_slider)
