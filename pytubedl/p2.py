@@ -2,10 +2,17 @@
 # Clip player
 #
 # TODO:
+# - popup:
+"""
+- slider with full song, and play and pause, reposition? - reuse existing code
+- set start and end of clip
+- display start/end of clip in list box (display())
+- transcribe
+- add note
+"""
 # - maybe "add note" to bookmark?
 # - change bookmark position
 # - can't change bookmark pos for <Full Track>"
-# - add "end clip" for bookmark
 # - can't add "end clip" for <Full Track>
 # - transcribe clip w/ vosk
 # - export mp3 file to disk
@@ -26,15 +33,16 @@ import tkinter.ttk as ttk
 class PopupWindow(object):
     """Stub popup window, to be used for bookmark/clip editing."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, bookmark):
         # The "return value" of the dialog,
         # entered by user in self.entry Entry box.
-        self.data = None
+        self.bookmark = bookmark
 
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
 
         self.entry = Entry(self.root)
+        self.entry.insert(END, bookmark.position_ms)
         self.entry.pack()
         self.ok_btn = Button(self.root, text="ok", command=self.ok)
         self.ok_btn.pack()
@@ -47,7 +55,7 @@ class PopupWindow(object):
 
     def ok(self):
         self.root.grab_release()
-        self.data = self.entry.get()
+        self.bookmark.position_ms = float(self.entry.get())
         self.root.destroy()
 
 
@@ -175,17 +183,31 @@ class MusicPlayer:
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
     def popup_window(self):
-        d = PopupWindow(self.window)
+        i = self._selected_bookmark_index()
+        if not i:
+            return
+        b = self.bookmarks[i]
+        d = PopupWindow(self.window, b)
         print('opened login window, about to wait')
         self.window.wait_window(d.root)
         print('hello back from popping up')
-        print(f'got data: {d.data}')
         d.root.grab_release()
+        print('reloading after popup')
+        # Re-select, b/c switching to the pop-up deselects the current.
+        self.bookmarks_lst.activate(i)
+        self.bookmarks_lst.select_set(i)
+        self.reload_bookmark_list()
+        self.move_to_bookmark(b)
 
     def reload_bookmark_list(self):
+        selected_index = self._selected_bookmark_index()
+        print(f'reloading with sel ind = {selected_index}')
         self.bookmarks_lst.delete(0, END)
         for b in self.bookmarks:
             self.bookmarks_lst.insert(END, b.display())
+        if selected_index:
+            self.bookmarks_lst.activate(selected_index)
+            self.bookmarks_lst.select_set(selected_index)
 
     def add_bookmark(self, m):
         b = MusicPlayer.Bookmark(m)
@@ -195,35 +217,34 @@ class MusicPlayer:
     def _selected_bookmark_index(self):
         s = self.bookmarks_lst.curselection()
         if len(s) == 0:
-            return -1
+            return None
         return int(s[0])
 
     def update_selected_bookmark(self, new_value_ms):
         i = self._selected_bookmark_index()
-        if (i == -1):
+        if not i:
             return
         b = self.bookmarks[i]
         if (b.position_ms == new_value_ms):
             return
-
         b.position_ms = new_value_ms
         self.reload_bookmark_list()
-        self.bookmarks_lst.activate(i)
-        self.bookmarks_lst.select_set(i)
 
     def delete_selected_bookmark(self):
         index = self._selected_bookmark_index()
-        if index <= 0:
+        if not index or index == 0:
             return
         del self.bookmarks[index]
         self.reload_bookmark_list()
 
     def on_bookmark_select(self, event):
         index = self._selected_bookmark_index()
-        if index == -1:
+        if not index:
             return
-        b = self.bookmarks[index]
-        print (f'bookmark selected: {(index, b.placeholder())}')
+        self.move_to_bookmark(self.bookmarks[index])
+
+    def move_to_bookmark(self, b):
+        print (f'bookmark selected: {(b.placeholder())}')
         self.reposition_slider(b.position_ms)
 
     def handle_key(self, event):
