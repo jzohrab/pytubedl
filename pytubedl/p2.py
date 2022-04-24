@@ -2,10 +2,9 @@
 # Clip player
 #
 # TODO:
-# - 'delete bookmark' (useful for duplicates)
 # - maybe "add note" to bookmark?
-# - ensure can't delete <Full Track>
 # - change bookmark position
+# - can't change bookmark pos for <Full Track>"
 # - add "end clip" for bookmark
 # - can't add "end clip" for <Full Track>
 # - transcribe clip w/ vosk
@@ -107,8 +106,10 @@ class MusicPlayer:
         load_btn.grid(row=0, column=1, padx=10)
         self.play_btn = Button(ctl_frame, text='Play', width=10, font=f, command=self.play_pause)
         self.play_btn.grid(row=0, column=2, padx=10)
+        del_btn = Button(ctl_frame, text='Delete', width=10, font=f, command=self.delete_selected_bookmark)
+        del_btn.grid(row=0, column=3, padx=10)
         quit_btn = Button(ctl_frame, text='Quit', width=10, font=f, command=self.quit)
-        quit_btn.grid(row=0, column=3, padx=10)
+        quit_btn.grid(row=0, column=4, padx=10)
 
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=2, column=0, pady=20)
@@ -143,11 +144,23 @@ class MusicPlayer:
         self.bookmarks.append(b)
         self.bookmarks_lst.insert(END, b.display())
 
-    def on_bookmark_select(self, event):
+    def _selected_bookmark_index(self):
         s = self.bookmarks_lst.curselection()
         if len(s) == 0:
+            return -1
+        return int(s[0])
+
+    def delete_selected_bookmark(self):
+        index = self._selected_bookmark_index()
+        if index <= 0:
             return
-        index = int(s[0])
+        del self.bookmarks[index]
+        self.reload_bookmark_list()
+
+    def on_bookmark_select(self, event):
+        index = self._selected_bookmark_index()
+        if index == -1:
+            return
         b = self.bookmarks[index]
         print (f'bookmark selected: {(index, b.placeholder())}')
         self.reposition_slider(b.position_ms())
@@ -158,6 +171,8 @@ class MusicPlayer:
             self.quit()
         elif k == 'm':
             self.add_bookmark(float(self.slider.get()))
+        elif k == 'd':
+            self.delete_selected_bookmark()
         elif k == 'p':
             # Previously, I had 'space' handle start/stop, but that
             # also triggers a re-selection of the currently selected
