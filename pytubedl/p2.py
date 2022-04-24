@@ -40,11 +40,15 @@ class MusicPlayer:
     class Bookmark:
         """A bookmark or clip item, stored in bookmarks listbox"""
         def __init__(self, pos_ms):
-            self.pos_ms = pos_ms
+            self._pos_ms = pos_ms
 
         def display(self):
             """String description of this for display in list boxes."""
-            return f"Bookmark {MusicPlayer._time_string(self.pos_ms)}"
+            return f"Bookmark {MusicPlayer._time_string(self._pos_ms)}"
+
+        def position_ms(self):
+            """Bookmark position."""
+            return self._pos_ms
 
         def placeholder(self):
             """Demo method, what to do when selected."""
@@ -134,12 +138,14 @@ class MusicPlayer:
 
     def on_bookmark_select(self, event):
         lst = self.bookmarks_lst
+        s = self.bookmarks_lst.curselection()
         # Note here that Tkinter passes an event object to handler
-        if len(lst.curselection()) == 0:
+        if len(s) == 0:
             return
-        index = int(lst.curselection()[0])
+        index = int(s[0])
         b = self.bookmarks[index]
         print (f'bookmark selected: {(index, b.placeholder())}')
+        self.reposition_slider(b.position_ms())
 
     def handle_key(self, event):
         k = event.keysym
@@ -147,7 +153,7 @@ class MusicPlayer:
             self.quit()
         elif k == 'm':
             self.add_bookmark(float(self.slider.get()))
-        elif k == 'space':
+        elif k == 'p':
             self.play_pause()
         elif k == 'Left':
             curr_value_ms_f = float(self.slider.get())
@@ -187,12 +193,14 @@ class MusicPlayer:
         self.slider.set(slider_pos)
         self.slider_lbl.configure(text=MusicPlayer._time_string(slider_pos))
 
-        if slider_pos < self.song_length_ms:
-            self.slider_update_id = self.slider.after(50, self.update_slider)
-        else:
-            # Reached the end, stop updating.
-            self.cancel_slider_updates()
-            self._pause()
+        if self.state is MusicPlayer.State.PLAYING:
+            if slider_pos < self.song_length_ms:
+                old_update_id = self.slider_update_id
+                self.slider_update_id = self.slider.after(50, self.update_slider)
+                print(f"after_id {old_update_id} replaced, now {self.slider_update_id}")
+            else:
+                # Reached the end, stop updating.
+                self._pause()
 
 
     def load(self):
