@@ -72,6 +72,9 @@ class MusicPlayer:
         self.state = MusicPlayer.State.NEW
         self.music_file = None
         self.song_length_ms = 0
+
+        # start_pos_ms is set when the slider is manually
+        # repositioned.
         self.start_pos_ms = 0
 
         self.slider_update_id = None
@@ -179,18 +182,13 @@ class MusicPlayer:
             # bookmark.
             self.play_pause()
         elif k == 'Left':
-            curr_value_ms_f = float(self.slider.get())
-            new_value_ms = curr_value_ms_f - 500
-            if (new_value_ms < 0):
-                new_value_ms = 0
-            self.reposition_slider(new_value_ms)
+            self.slider_increment(-500)
         elif k == 'Right':
-            curr_value_ms_f = float(self.slider.get())
-            new_value_ms = curr_value_ms_f + 500
-            if (new_value_ms > self.song_length_ms):
-                new_value_ms = self.song_length_ms
-            self.reposition_slider(new_value_ms)
-        # 'plus', 'Return', 'Right', 'Left' etc.
+            self.slider_increment(500)
+        # 'plus', 'Return', etc.
+
+    def slider_increment(self, i):
+        self.reposition_slider(float(self.slider.get()) + i)
 
     def slider_click(self, event):
         """User is dragging the slider now, so don't update it."""
@@ -201,9 +199,14 @@ class MusicPlayer:
         self.reposition_slider(value_ms_f)
 
     def reposition_slider(self, value_ms_f):
-        self.start_pos_ms = value_ms_f
-        # print(f"Updating start pos to {value_ms_f}")
-        mixer.music.play(loops = 0, start = (value_ms_f / 1000.0))
+        v = value_ms_f
+        if (v < 0):
+            v = 0
+        elif (v > self.song_length_ms):
+            v = self.song_length_ms
+
+        self.start_pos_ms = v
+        mixer.music.play(loops = 0, start = (v / 1000.0))
         if self.state is not MusicPlayer.State.PLAYING:
             mixer.music.pause()
         self.update_slider()
