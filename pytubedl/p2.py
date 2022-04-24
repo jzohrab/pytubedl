@@ -29,7 +29,7 @@ class MusicPlayer:
         total_seconds = ms / 1000.0
         mins = int(total_seconds) // 60
         secs = total_seconds % 60
-        return '{:02d}m{:02.1f}s'.format(mins, secs)
+        return '{:02d}m{:04.1f}s'.format(mins, secs)
 
     class State(Enum):
         NEW = 0
@@ -46,9 +46,14 @@ class MusicPlayer:
             """String description of this for display in list boxes."""
             return f"Bookmark {MusicPlayer._time_string(self._pos_ms)}"
 
+        @property
         def position_ms(self):
             """Bookmark position."""
             return self._pos_ms
+
+        @position_ms.setter
+        def position_ms(self, v):
+            self._pos_ms = v
 
         def placeholder(self):
             """Demo method, what to do when selected."""
@@ -153,6 +158,19 @@ class MusicPlayer:
             return -1
         return int(s[0])
 
+    def update_selected_bookmark(self, new_value_ms):
+        i = self._selected_bookmark_index()
+        if (i == -1):
+            return
+        b = self.bookmarks[i]
+        if (b.position_ms == new_value_ms):
+            return
+
+        b.position_ms = new_value_ms
+        self.reload_bookmark_list()
+        self.bookmarks_lst.activate(i)
+        self.bookmarks_lst.select_set(i)
+
     def delete_selected_bookmark(self):
         index = self._selected_bookmark_index()
         if index <= 0:
@@ -166,7 +184,7 @@ class MusicPlayer:
             return
         b = self.bookmarks[index]
         print (f'bookmark selected: {(index, b.placeholder())}')
-        self.reposition_slider(b.position_ms())
+        self.reposition_slider(b.position_ms)
 
     def handle_key(self, event):
         k = event.keysym
@@ -182,9 +200,11 @@ class MusicPlayer:
             # bookmark.
             self.play_pause()
         elif k == 'Left':
-            self.slider_increment(-500)
+            self.slider_increment(-100)
         elif k == 'Right':
-            self.slider_increment(500)
+            self.slider_increment(100)
+        elif k == 'u':
+            self.update_selected_bookmark(float(self.slider.get()))
         # 'plus', 'Return', etc.
 
     def slider_increment(self, i):
@@ -206,6 +226,9 @@ class MusicPlayer:
             v = self.song_length_ms
 
         self.start_pos_ms = v
+
+        self.update_selected_bookmark(v)
+
         mixer.music.play(loops = 0, start = (v / 1000.0))
         if self.state is not MusicPlayer.State.PLAYING:
             mixer.music.pause()
