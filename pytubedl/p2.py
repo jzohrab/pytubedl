@@ -11,6 +11,7 @@
 # - export mp3 file to disk
 # - export card and transcription to anki
 #
+# - any other TODOs in the code.
 ###
 
 
@@ -87,9 +88,6 @@ class MusicPlayer:
         self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
         scrollbar.config(command= self.bookmarks_lst.yview)
 
-        for i in range(1, 10):
-            self.add_bookmark(i * 1000)
-
         ctl_frame = Frame(master_frame)
         ctl_frame.grid(row=1, column=0, pady=20)
 
@@ -123,6 +121,12 @@ class MusicPlayer:
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
 
+    # TODO - clear out the listbox on load of new song
+    def reload_bookmark_list(self):
+        self.bookmarks_lst.delete(0, END)
+        for b in self.bookmarks:
+            self.bookmarks_lst.insert(END, b.display())
+
     def add_bookmark(self, m):
         b = MusicPlayer.Bookmark(m)
         self.bookmarks.append(b)
@@ -141,6 +145,8 @@ class MusicPlayer:
         k = event.keysym
         if k == 'q':
             self.quit()
+        elif k == 'm':
+            self.add_bookmark(float(self.slider.get()))
         elif k == 'space':
             self.play_pause()
         elif k == 'Left':
