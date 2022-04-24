@@ -87,7 +87,6 @@ class MusicPlayer:
         self.bookmarks_lst.bind('<<ListboxSelect>>', self.on_bookmark_select)
 
         scrollbar = ttk.Scrollbar(bk_frame, orient= 'vertical')
-        # # scrollbar.pack(side= RIGHT, fill= Y)
         scrollbar.grid(row=0, column=2, sticky='NS')
         self.bookmarks_lst.config(yscrollcommand= scrollbar.set)
         scrollbar.config(command= self.bookmarks_lst.yview)
@@ -137,9 +136,7 @@ class MusicPlayer:
         self.bookmarks_lst.insert(END, b.display())
 
     def on_bookmark_select(self, event):
-        lst = self.bookmarks_lst
         s = self.bookmarks_lst.curselection()
-        # Note here that Tkinter passes an event object to handler
         if len(s) == 0:
             return
         index = int(s[0])
