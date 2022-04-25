@@ -4,7 +4,6 @@
 # TODO:
 # - popup:
 """
-- plot the sound? for fun
 - add double slider https://github.com/MenxLi/tkSliderWidget
 - respect double slider on playback
 - add buttons to reposition the start and end of the slider values, respecting max
@@ -205,10 +204,12 @@ class MusicPlayer:
 
 
 # TODO move to top
+from pydub import AudioSegment
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
-
+import numpy as np
+import wave
 
 class BookmarkWindow(object):
     """Stub popup window, to be used for bookmark/clip editing."""
@@ -239,10 +240,11 @@ class BookmarkWindow(object):
         # For bookmark, assume that the user clicked "bookmark"
         # *after* hearing something interesting -- so pad a bit more
         # before than after.
+        # self.from_val and to_val are also used during plotting.
         pad_before = 10 * 1000
         pad_after = 5 * 1000
-        from_val = int(max(0, bookmark.position_ms - pad_before))
-        to_val = int(min(self.song_length_ms, bookmark.position_ms + pad_after))
+        self.from_val = int(max(0, bookmark.position_ms - pad_before))
+        self.to_val = int(min(self.song_length_ms, bookmark.position_ms + pad_after))
 
         slider_frame = Frame(self.root)
         slider_frame.grid(row=2, column=0, pady=20)
@@ -258,17 +260,17 @@ class BookmarkWindow(object):
         #   tkinter-ttk-scale-seems-broken-if-from-is-not-zero-mac-python-3-8-2-tcl-tk
         self.slider = Scale(
             slider_frame,
-            from_=from_val,
-            to=to_val,
+            from_=self.from_val,
+            to=self.to_val,
             orient=HORIZONTAL,
-            length=150)
+            length= 5 * 60)
         self.slider.grid(row=1, column=2, pady=10)
 
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=2, column=2, pady=2)
-        self.slider_min_lbl = Label(slider_frame, text=TimeUtils.time_string(from_val))
+        self.slider_min_lbl = Label(slider_frame, text=TimeUtils.time_string(self.from_val))
         self.slider_min_lbl.grid(row=2, column=1, pady=2)
-        self.slider_max_lbl = Label(slider_frame, text=TimeUtils.time_string(to_val))
+        self.slider_max_lbl = Label(slider_frame, text=TimeUtils.time_string(self.to_val))
         self.slider_max_lbl.grid(row=2, column=3, pady=2)
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
@@ -276,7 +278,7 @@ class BookmarkWindow(object):
         self.music_player.reposition(bookmark.position_ms)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
-        self.plot()
+        self.plot(slider_frame)
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
@@ -298,36 +300,84 @@ class BookmarkWindow(object):
         self.bookmark.position_ms = float(self.entry.get())
         self.root.destroy()
 
+    _full_audio_segment = None
+    _old_music_file = None
+
+    @classmethod
+    def getFullAudioSegment(cls, f):
+        # Store the full segment, b/c it takes a while to make.
+        if (BookmarkWindow._old_music_file != f or BookmarkWindow._full_audio_segment is None):
+            print('loading full segment ...')
+            BookmarkWindow._full_audio_segment = AudioSegment.from_mp3(f)
+            BookmarkWindow._old_music_file = f
+        else:
+            print('using cached segment')
+        return BookmarkWindow._full_audio_segment
+            
     # plot function is created for
     # plotting the graph in
     # tkinter window
-    def plot(self):
+    def plot(self, frame):
 
-        # the figure that will contain the plot
-        fig = Figure(figsize = (5, 5), dpi = 100)
+        print('loading audio segment from full file')
+        sound = BookmarkWindow.getFullAudioSegment(self.music_file)
+        print('ok got full segment')
+        sound = sound[self.from_val : self.to_val]
+        print('ok got partial segment')
+        sound = sound.set_channels(1)
 
-        # list of squares
-        y = [i**2 for i in range(101)]
+        # Hack for plotting: export to a .wav file.  I can't
+        # immediately figure out how to directly plot an mp3 (should
+        # be possible, as I have all the data), but there are several
+        # examples about plotting .wav files,
+        # e.g. https://www.geeksforgeeks.org/plotting-various-sounds-on-graphs-using-python-and-matplotlib/
+        signal = None
+        time = None
+        from tempfile import NamedTemporaryFile  # TODO move up
+        print('about to load data')
+        with NamedTemporaryFile("w+b", suffix=".wav") as f:
+            sound.export(f.name, format='wav')
+            raw = wave.open(f.name, "r")
+            f_rate = raw.getframerate()
+            signal = raw.readframes(-1)
+            signal = np.frombuffer(signal, dtype = 'int16')
+            time = np.linspace(
+                0, # start
+                len(signal) / f_rate,
+                num = len(signal)
+            )
+        print('loaded data')
 
-        # adding the subplot
+        fig = Figure(figsize = (5, 1))
         plot1 = fig.add_subplot(111)
 
-        # plotting the graph
-        plot1.plot(y)
+        # ref https://stackoverflow.com/questions/2176424/hiding-axis-text-in-matplotlib-plots
+        ax = plot1
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.set_xticklabels([])
+        ax.set_xticks([])
+        ax.axes.get_xaxis().set_visible(False)
 
-        # creating the Tkinter canvas
-        # containing the Matplotlib figure
-        canvas = FigureCanvasTkAgg(fig, master = self.root)
+        ax.spines['left'].set_visible(False)
+        ax.set_yticklabels([])
+        ax.set_yticks([])
+        ax.axes.get_yaxis().set_visible(False)
+
+        print('about to plot')
+        plot1.plot(time, signal)
+        print('plotted')
+
+        canvas = FigureCanvasTkAgg(fig, master = frame)
         canvas.draw()
 
         # placing the canvas on the Tkinter window
-        canvas.get_tk_widget().grid(row=3, column=0, pady=20)
+        canvas.get_tk_widget().grid(row=3, column=2, pady=20)
 
-        # creating the Matplotlib toolbar
+        # Can't create Matplotlib toolbar, as it uses pack(), and we're already using grid().
         # toolbar = NavigationToolbar2Tk(canvas, self.root)
         # toolbar.update()
-
-        # placing the toolbar on the Tkinter window
         # canvas.get_tk_widget().grid(row=4, column=0, pady=20)
 
 
