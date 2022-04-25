@@ -95,8 +95,8 @@ class MusicPlayer:
         self.slider.bind('<Button-1>', self.slider_click)
         self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
-    def slider_increment(self, i):
-        self.reposition_slider(float(self.slider.get()) + i)
+    def increment(self, i):
+        self.reposition(float(self.slider.get()) + i)
 
     def slider_click(self, event):
         """User is dragging the slider now, so don't update it."""
@@ -104,9 +104,9 @@ class MusicPlayer:
 
     def slider_unclick(self, event):
         value_ms_f = float(self.slider.get())
-        self.reposition_slider(value_ms_f)
+        self.reposition(value_ms_f)
 
-    def reposition_slider(self, value_ms_f):
+    def reposition(self, value_ms_f):
         v = value_ms_f
         if (v < 0):
             v = 0
@@ -114,8 +114,6 @@ class MusicPlayer:
             v = self.song_length_ms
 
         self.start_pos_ms = v
-
-        self.update_selected_bookmark(v)
 
         mixer.music.play(loops = 0, start = (v / 1000.0))
         if self.state is not MusicPlayer.State.PLAYING:
@@ -127,8 +125,10 @@ class MusicPlayer:
             self.slider.after_cancel(self.slider_update_id)
 
     def update_slider(self):
+        print('updating slider')
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
+        print(f'current pos = {current_pos_ms}, slider_pos = {slider_pos}, len = {self.song_length_ms}')
         if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
             # Mixer.music goes to -1 when it reaches the end of the file.
             slider_pos = self.song_length_ms
@@ -142,45 +142,48 @@ class MusicPlayer:
                 self.slider_update_id = self.slider.after(50, self.update_slider)
             else:
                 # Reached the end, stop updating.
+                print('reached the end?')
                 self._pause()
 
-    def load_song(self, f):
+    def load_song(self, f, sl):
+        print(f'called load_song {f}')
         self.stop()
         self.music_file = f
+        self.song_length_ms = sl
         mixer.music.load(f)
-
-        song_mut = MP3(f)
-        self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
-        self.slider.config(to = self.song_length_ms, value=0)
         self.start_pos_ms = 0.0
-
         self.state = MusicPlayer.State.LOADED
 
     def play_pause(self):
+        print('in play_pause')
         self.cancel_slider_updates()
         if self.music_file is None:
             return
+        print(f'in play_pause, with state = {self.state}')
 
         if self.state is MusicPlayer.State.LOADED:
             # First play, load and start.
-            self.play_btn.configure(text = 'Pause')
+            print('loading starting')
             mixer.music.play()
+            print('should have playing')
             self.state = MusicPlayer.State.PLAYING
             self.start_pos_ms = 0
+            print('starting updates')
             self.update_slider()
 
         elif self.state is MusicPlayer.State.PLAYING:
+            print('playing, will pause')
             self._pause()
 
         elif self.state is MusicPlayer.State.PAUSED:
+            print('paused will play')
             mixer.music.unpause()
             self.state = MusicPlayer.State.PLAYING
             self.update_slider()
-            self.play_btn.configure(text = 'Pause')
 
         else:
             # Should never get here, but in case I missed something ...
-            raise RuntimeError('??? weird state?')
+            raise RuntimeError(f'??? weird state {self.state}?')
 
     def _pause(self):
         mixer.music.pause()
@@ -294,12 +297,14 @@ class MainWindow:
             value=0,
             length=360)
         self.slider.grid(row=0, column=1, pady=10)
-        self.slider.bind('<Button-1>', self.slider_click)
-        self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
+        # self.slider.bind('<Button-1>', self.slider_click)
+        # self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
 
+        self.music_player = MusicPlayer(self.slider, self.slider_lbl)
+    
         window.bind('<Key>', self.handle_key)
 
         # during testing
@@ -369,7 +374,7 @@ class MainWindow:
 
     def move_to_bookmark(self, b):
         print (f'bookmark selected: {(b.placeholder())}')
-        self.reposition_slider(b.position_ms)
+        self.music_player.reposition(b.position_ms)
 
     def handle_key(self, event):
         k = event.keysym
@@ -386,62 +391,62 @@ class MainWindow:
             # bookmark.
             self.play_pause()
         elif k == 'Left':
-            self.slider_increment(-100)
+            self.music_player.increment(-100)
         elif k == 'Right':
-            self.slider_increment(100)
+            self.music_player.increment(100)
         elif k == 'u':
             self.update_selected_bookmark(float(self.slider.get()))
         # 'plus', 'Return', etc.
 
-    def slider_increment(self, i):
-        self.reposition_slider(float(self.slider.get()) + i)
-
-    def slider_click(self, event):
-        """User is dragging the slider now, so don't update it."""
-        self.cancel_slider_updates()
-
-    def slider_unclick(self, event):
-        value_ms_f = float(self.slider.get())
-        self.reposition_slider(value_ms_f)
-
-    def reposition_slider(self, value_ms_f):
-        v = value_ms_f
-        if (v < 0):
-            v = 0
-        elif (v > self.song_length_ms):
-            v = self.song_length_ms
-
-        self.start_pos_ms = v
-
-        self.update_selected_bookmark(v)
-
-        mixer.music.play(loops = 0, start = (v / 1000.0))
-        if self.state is not MainWindow.State.PLAYING:
-            mixer.music.pause()
-        self.update_slider()
-
-    def cancel_slider_updates(self):
-        if self.slider_update_id:
-            self.slider.after_cancel(self.slider_update_id)
-
-    def update_slider(self):
-        current_pos_ms = mixer.music.get_pos()
-        slider_pos = self.start_pos_ms + current_pos_ms
-        if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
-            # Mixer.music goes to -1 when it reaches the end of the file.
-            slider_pos = self.song_length_ms
-
-        self.slider.set(slider_pos)
-        self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
-
-        if self.state is MainWindow.State.PLAYING:
-            if slider_pos < self.song_length_ms:
-                old_update_id = self.slider_update_id
-                self.slider_update_id = self.slider.after(50, self.update_slider)
-            else:
-                # Reached the end, stop updating.
-                self._pause()
-
+#    def slider_increment(self, i):
+#        self.reposition_slider(float(self.slider.get()) + i)
+#
+#    def slider_click(self, event):
+#        """User is dragging the slider now, so don't update it."""
+#        self.cancel_slider_updates()
+#
+#    def slider_unclick(self, event):
+#        value_ms_f = float(self.slider.get())
+#        self.reposition_slider(value_ms_f)
+#
+#    def reposition_slider(self, value_ms_f):
+#        v = value_ms_f
+#        if (v < 0):
+#            v = 0
+#        elif (v > self.song_length_ms):
+#            v = self.song_length_ms
+#
+#        self.start_pos_ms = v
+#
+#        self.update_selected_bookmark(v)
+#
+#        mixer.music.play(loops = 0, start = (v / 1000.0))
+#        if self.state is not MainWindow.State.PLAYING:
+#            mixer.music.pause()
+#        self.update_slider()
+#
+#    def cancel_slider_updates(self):
+#        if self.slider_update_id:
+#            self.slider.after_cancel(self.slider_update_id)
+#
+#    def update_slider(self):
+#        current_pos_ms = mixer.music.get_pos()
+#        slider_pos = self.start_pos_ms + current_pos_ms
+#        if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
+#            # Mixer.music goes to -1 when it reaches the end of the file.
+#            slider_pos = self.song_length_ms
+#
+#        self.slider.set(slider_pos)
+#        self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
+#
+#        if self.state is MainWindow.State.PLAYING:
+#            if slider_pos < self.song_length_ms:
+#                old_update_id = self.slider_update_id
+#                self.slider_update_id = self.slider.after(50, self.update_slider)
+#            else:
+#                # Reached the end, stop updating.
+#                self._pause()
+#
 
     def load(self):
         f = filedialog.askopenfilename()
@@ -451,54 +456,23 @@ class MainWindow:
             print("no file?")
 
     def _load_song_details(self, f):
-        self.stop()
-        self.music_file = f
-        mixer.music.load(f)
-
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
-        self.start_pos_ms = 0.0
+
+        print(f'loading song {f}')
+        self.music_player.load_song(f, self.song_length_ms)
 
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
-        self.state = MainWindow.State.LOADED
 
     def play_pause(self):
-        self.cancel_slider_updates()
-        if self.music_file is None:
-            return
-
-        if self.state is MainWindow.State.LOADED:
-            # First play, load and start.
-            self.play_btn.configure(text = 'Pause')
-            mixer.music.play()
-            self.state = MainWindow.State.PLAYING
-            self.start_pos_ms = 0
-            self.update_slider()
-
-        elif self.state is MainWindow.State.PLAYING:
-            self._pause()
-
-        elif self.state is MainWindow.State.PAUSED:
-            mixer.music.unpause()
-            self.state = MainWindow.State.PLAYING
-            self.update_slider()
-            self.play_btn.configure(text = 'Pause')
-
-        else:
-            # Should never get here, but in case I missed something ...
-            raise RuntimeError('??? weird state?')
-
-    def _pause(self):
-        mixer.music.pause()
-        self.cancel_slider_updates()
-        self.state = MainWindow.State.PAUSED
-        self.play_btn.configure(text = 'Play')
-
-    def stop(self):
-        mixer.music.stop()
-        self.cancel_slider_updates()
+        """If playing, will switch to paused."""
+        txt = 'Pause'
+        if self.music_player.state is MusicPlayer.State.PLAYING:
+            txt = 'Play'
+        self.play_btn.configure(text = txt)
+        self.music_player.play_pause()
 
     def quit(self):
         mixer.music.stop()
