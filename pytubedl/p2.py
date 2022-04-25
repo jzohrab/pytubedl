@@ -113,8 +113,6 @@ class MainWindow:
         window.geometry('600x400')
         self.window = window
 
-        mixer.init()
-
         self.state = MainWindow.State.NEW
         self.music_file = None
         self.song_length_ms = 0
@@ -383,6 +381,8 @@ class MainWindow:
         mixer.music.stop()
         self.window.destroy()
 
+
 root = Tk()
+mixer.init()
 app = MainWindow(root)
 root.mainloop()
