@@ -4,12 +4,16 @@
 # TODO:
 # - popup:
 """
-- MusicPlayer should (?) stop playing if it reaches the end of the clip ... or resize the slider box
-- add buttons to reposition the start and end of the slider values
-- set start and end of clip
+- add double slider https://github.com/MenxLi/tkSliderWidget
+- respect double slider on playback
+- add buttons to reposition the start and end of the slider values, respecting max
+- save start and end of clip
 - display start/end of clip in list box (display())
-- transcribe
-- add note
+- if bookmark already has start/end defined, use that to determine slider from/to, and double-slide
+- resave/replace
+- transcribe clip
+- add note?
+- save transcription etc
 """
 # - maybe "add note" to bookmark?
 # - change bookmark position
@@ -141,15 +145,11 @@ class MusicPlayer:
     def update_slider(self):
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
-        # print(f'update_slider, pos = {slider_pos}')
         if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
             # Mixer.music goes to -1 when it reaches the end of the file.
             slider_pos = self.song_length_ms
-        # print(f'update_slider, now pos = {slider_pos}')
 
-        # print(f'old slider pos: {self.slider.get()}')
         self.slider.set(slider_pos)
-        # print(f'after set to {slider_pos}, new slider pos: {self.slider.get()}')
         self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
 
         if self.state is MusicPlayer.State.PLAYING:
@@ -229,13 +229,13 @@ class BookmarkWindow(object):
         self.ok_btn = Button(ctl_frame, text="ok", command=self.ok)
         self.ok_btn.grid(row=0, column=3, padx=10)
 
-        # Slider starts with 10s of padding on either side of the
-        # bookmark.
-        # TODO fix this to 10 s
-        padding_ms = 1 * 1000
-
-        from_val = int(max(0, bookmark.position_ms - padding_ms))
-        to_val = int(min(self.song_length_ms, bookmark.position_ms + padding_ms))
+        # For bookmark, assume that the user clicked "bookmark"
+        # *after* hearing something interesting -- so pad a bit more
+        # before than after.
+        pad_before = 10 * 1000
+        pad_after = 5 * 1000
+        from_val = int(max(0, bookmark.position_ms - pad_before))
+        to_val = int(min(self.song_length_ms, bookmark.position_ms + pad_after))
 
         slider_frame = Frame(self.root)
         slider_frame.grid(row=2, column=0, pady=20)
@@ -496,6 +496,7 @@ class MainWindow:
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
+        self.slider_lbl.configure(text=TimeUtils.time_string(self.song_length_ms))
         self.music_file = f
         self.music_player.load_song(f, self.song_length_ms)
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
