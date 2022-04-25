@@ -69,6 +69,129 @@ class TimeUtils:
         return '{:02d}m{:04.1f}s'.format(mins, secs)
 
 
+class MusicPlayer:
+    """Actually plays music, with slider."""
+
+    class State(Enum):
+        NEW = 0
+        LOADED = 1
+        PLAYING = 2
+        PAUSED = 3
+
+    def __init__(self, slider, slider_lbl):
+        self.slider = slider
+        self.slider_lbl = slider_lbl
+
+        self.state = MusicPlayer.State.NEW
+        self.music_file = None
+        self.song_length_ms = 0
+
+        # start_pos_ms is set when the slider is manually
+        # repositioned.
+        self.start_pos_ms = 0
+
+        self.slider_update_id = None
+
+        self.slider.bind('<Button-1>', self.slider_click)
+        self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
+
+    def slider_increment(self, i):
+        self.reposition_slider(float(self.slider.get()) + i)
+
+    def slider_click(self, event):
+        """User is dragging the slider now, so don't update it."""
+        self.cancel_slider_updates()
+
+    def slider_unclick(self, event):
+        value_ms_f = float(self.slider.get())
+        self.reposition_slider(value_ms_f)
+
+    def reposition_slider(self, value_ms_f):
+        v = value_ms_f
+        if (v < 0):
+            v = 0
+        elif (v > self.song_length_ms):
+            v = self.song_length_ms
+
+        self.start_pos_ms = v
+
+        self.update_selected_bookmark(v)
+
+        mixer.music.play(loops = 0, start = (v / 1000.0))
+        if self.state is not MusicPlayer.State.PLAYING:
+            mixer.music.pause()
+        self.update_slider()
+
+    def cancel_slider_updates(self):
+        if self.slider_update_id:
+            self.slider.after_cancel(self.slider_update_id)
+
+    def update_slider(self):
+        current_pos_ms = mixer.music.get_pos()
+        slider_pos = self.start_pos_ms + current_pos_ms
+        if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
+            # Mixer.music goes to -1 when it reaches the end of the file.
+            slider_pos = self.song_length_ms
+
+        self.slider.set(slider_pos)
+        self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
+
+        if self.state is MusicPlayer.State.PLAYING:
+            if slider_pos < self.song_length_ms:
+                old_update_id = self.slider_update_id
+                self.slider_update_id = self.slider.after(50, self.update_slider)
+            else:
+                # Reached the end, stop updating.
+                self._pause()
+
+    def load_song(self, f):
+        self.stop()
+        self.music_file = f
+        mixer.music.load(f)
+
+        song_mut = MP3(f)
+        self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
+        self.slider.config(to = self.song_length_ms, value=0)
+        self.start_pos_ms = 0.0
+
+        self.state = MusicPlayer.State.LOADED
+
+    def play_pause(self):
+        self.cancel_slider_updates()
+        if self.music_file is None:
+            return
+
+        if self.state is MusicPlayer.State.LOADED:
+            # First play, load and start.
+            self.play_btn.configure(text = 'Pause')
+            mixer.music.play()
+            self.state = MusicPlayer.State.PLAYING
+            self.start_pos_ms = 0
+            self.update_slider()
+
+        elif self.state is MusicPlayer.State.PLAYING:
+            self._pause()
+
+        elif self.state is MusicPlayer.State.PAUSED:
+            mixer.music.unpause()
+            self.state = MusicPlayer.State.PLAYING
+            self.update_slider()
+            self.play_btn.configure(text = 'Pause')
+
+        else:
+            # Should never get here, but in case I missed something ...
+            raise RuntimeError('??? weird state?')
+
+    def _pause(self):
+        mixer.music.pause()
+        self.cancel_slider_updates()
+        self.state = MusicPlayer.State.PAUSED
+
+    def stop(self):
+        mixer.music.stop()
+        self.cancel_slider_updates()
+
+
 class MainWindow:
 
     class State(Enum):
