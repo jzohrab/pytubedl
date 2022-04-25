@@ -187,7 +187,7 @@ class MusicPlayer:
 class BookmarkWindow(object):
     """Stub popup window, to be used for bookmark/clip editing."""
 
-    def __init__(self, parent, bookmark):
+    def __init__(self, parent, bookmark, music_file, song_length_ms):
         # The "return value" of the dialog,
         # entered by user in self.entry Entry box.
         self.bookmark = bookmark
@@ -195,11 +195,17 @@ class BookmarkWindow(object):
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
 
-        self.entry = Entry(self.root)
+        ctl_frame = Frame(self.root)
+        ctl_frame.grid(row=1, column=0, pady=20)
+
+        self.entry = Entry(ctl_frame)
         self.entry.insert(END, bookmark.position_ms)
-        self.entry.grid(row = 0, column = 1, padx = 10)
-        self.ok_btn = Button(self.root, text="ok", command=self.ok)
-        self.ok_btn.grid(row = 0, column = 2, padx = 10)
+        self.entry.grid(row=0, column=1, padx=10)
+        f = ('Times', 10)
+        self.play_btn = Button(ctl_frame, text='Play', width=10, font=f, command=self.play_pause)
+        self.play_btn.grid(row=0, column=2, padx=10)
+        self.ok_btn = Button(ctl_frame, text="ok", command=self.ok)
+        self.ok_btn.grid(row=0, column=3, padx=10)
 
         slider_frame = Frame(self.root)
         slider_frame.grid(row=2, column=0, pady=20)
@@ -216,12 +222,22 @@ class BookmarkWindow(object):
         self.slider_lbl.grid(row=2, column=1, pady=2)
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl)
+        self.music_player.load_song(music_file, song_length_ms)
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
         self.root.wait_visibility()
         self.root.grab_set()
         self.root.transient(parent)
+
+    def play_pause(self):
+        """If playing, will switch to paused."""
+        txt = 'Pause'
+        if self.music_player.state is MusicPlayer.State.PLAYING:
+            # Will pause, so change text to 'Play'.
+            txt = 'Play'
+        self.play_btn.configure(text = txt)
+        self.music_player.play_pause()
 
     def ok(self):
         self.root.grab_release()
@@ -348,7 +364,8 @@ class MainWindow:
         if not i:
             return
         b = self.bookmarks[i]
-        d = BookmarkWindow(self.window, b)
+
+        d = BookmarkWindow(self.window, b, self.music_file, self.song_length_ms)
         self.window.wait_window(d.root)
         d.root.grab_release()
         # Re-select, b/c switching to the pop-up deselects the current.
@@ -435,6 +452,7 @@ class MainWindow:
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
+        self.music_file = f
         self.music_player.load_song(f, self.song_length_ms)
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
