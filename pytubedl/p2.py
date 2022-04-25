@@ -142,11 +142,11 @@ class MusicPlayer:
         self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
 
         if self.state is MusicPlayer.State.PLAYING:
-            if slider_pos < self.song_length_ms:
+            if slider_pos < self.slider.cget('to'):
                 old_update_id = self.slider_update_id
                 self.slider_update_id = self.slider.after(50, self.update_slider)
             else:
-                # Reached the end, stop updating.
+                # Reached the end of the slider, stop updating.
                 self._pause()
 
     def load_song(self, f, sl):
