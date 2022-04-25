@@ -125,10 +125,8 @@ class MusicPlayer:
             self.slider.after_cancel(self.slider_update_id)
 
     def update_slider(self):
-        print('updating slider')
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
-        print(f'current pos = {current_pos_ms}, slider_pos = {slider_pos}, len = {self.song_length_ms}')
         if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
             # Mixer.music goes to -1 when it reaches the end of the file.
             slider_pos = self.song_length_ms
@@ -142,11 +140,9 @@ class MusicPlayer:
                 self.slider_update_id = self.slider.after(50, self.update_slider)
             else:
                 # Reached the end, stop updating.
-                print('reached the end?')
                 self._pause()
 
     def load_song(self, f, sl):
-        print(f'called load_song {f}')
         self.stop()
         self.music_file = f
         self.song_length_ms = sl
@@ -155,28 +151,21 @@ class MusicPlayer:
         self.state = MusicPlayer.State.LOADED
 
     def play_pause(self):
-        print('in play_pause')
         self.cancel_slider_updates()
         if self.music_file is None:
             return
-        print(f'in play_pause, with state = {self.state}')
 
         if self.state is MusicPlayer.State.LOADED:
             # First play, load and start.
-            print('loading starting')
             mixer.music.play()
-            print('should have playing')
             self.state = MusicPlayer.State.PLAYING
             self.start_pos_ms = 0
-            print('starting updates')
             self.update_slider()
 
         elif self.state is MusicPlayer.State.PLAYING:
-            print('playing, will pause')
             self._pause()
 
         elif self.state is MusicPlayer.State.PAUSED:
-            print('paused will play')
             mixer.music.unpause()
             self.state = MusicPlayer.State.PLAYING
             self.update_slider()
@@ -317,11 +306,8 @@ class MainWindow:
             return
         b = self.bookmarks[i]
         d = PopupWindow(self.window, b)
-        print('opened login window, about to wait')
         self.window.wait_window(d.root)
-        print('hello back from popping up')
         d.root.grab_release()
-        print('reloading after popup')
         # Re-select, b/c switching to the pop-up deselects the current.
         self.bookmarks_lst.activate(i)
         self.bookmarks_lst.select_set(i)
@@ -330,7 +316,6 @@ class MainWindow:
 
     def reload_bookmark_list(self):
         selected_index = self._selected_bookmark_index()
-        print(f'reloading with sel ind = {selected_index}')
         self.bookmarks_lst.delete(0, END)
         for b in self.bookmarks:
             self.bookmarks_lst.insert(END, b.display())
@@ -373,12 +358,10 @@ class MainWindow:
         self.move_to_bookmark(self.bookmarks[index])
 
     def move_to_bookmark(self, b):
-        print (f'bookmark selected: {(b.placeholder())}')
         self.music_player.reposition(b.position_ms)
 
     def handle_key(self, event):
         k = event.keysym
-        print(f'got key: {k}')
         if k == 'q':
             self.quit()
         elif k == 'm':
@@ -398,56 +381,6 @@ class MainWindow:
             self.update_selected_bookmark(float(self.slider.get()))
         # 'plus', 'Return', etc.
 
-#    def slider_increment(self, i):
-#        self.reposition_slider(float(self.slider.get()) + i)
-#
-#    def slider_click(self, event):
-#        """User is dragging the slider now, so don't update it."""
-#        self.cancel_slider_updates()
-#
-#    def slider_unclick(self, event):
-#        value_ms_f = float(self.slider.get())
-#        self.reposition_slider(value_ms_f)
-#
-#    def reposition_slider(self, value_ms_f):
-#        v = value_ms_f
-#        if (v < 0):
-#            v = 0
-#        elif (v > self.song_length_ms):
-#            v = self.song_length_ms
-#
-#        self.start_pos_ms = v
-#
-#        self.update_selected_bookmark(v)
-#
-#        mixer.music.play(loops = 0, start = (v / 1000.0))
-#        if self.state is not MainWindow.State.PLAYING:
-#            mixer.music.pause()
-#        self.update_slider()
-#
-#    def cancel_slider_updates(self):
-#        if self.slider_update_id:
-#            self.slider.after_cancel(self.slider_update_id)
-#
-#    def update_slider(self):
-#        current_pos_ms = mixer.music.get_pos()
-#        slider_pos = self.start_pos_ms + current_pos_ms
-#        if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
-#            # Mixer.music goes to -1 when it reaches the end of the file.
-#            slider_pos = self.song_length_ms
-#
-#        self.slider.set(slider_pos)
-#        self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
-#
-#        if self.state is MainWindow.State.PLAYING:
-#            if slider_pos < self.song_length_ms:
-#                old_update_id = self.slider_update_id
-#                self.slider_update_id = self.slider.after(50, self.update_slider)
-#            else:
-#                # Reached the end, stop updating.
-#                self._pause()
-#
-
     def load(self):
         f = filedialog.askopenfilename()
         if f:
@@ -459,10 +392,7 @@ class MainWindow:
         song_mut = MP3(f)
         self.song_length_ms = song_mut.info.length * 1000  # length is in seconds
         self.slider.config(to = self.song_length_ms, value=0)
-
-        print(f'loading song {f}')
         self.music_player.load_song(f, self.song_length_ms)
-
         self.bookmarks = [ MainWindow.FullTrackBookmark() ]
         self.reload_bookmark_list()
 
@@ -470,12 +400,13 @@ class MainWindow:
         """If playing, will switch to paused."""
         txt = 'Pause'
         if self.music_player.state is MusicPlayer.State.PLAYING:
+            # Will pause, so change text to 'Play'.
             txt = 'Play'
         self.play_btn.configure(text = txt)
         self.music_player.play_pause()
 
     def quit(self):
-        mixer.music.stop()
+        self.music_player.stop()
         self.window.destroy()
 
 
