@@ -1,8 +1,15 @@
 cffi==1.15.0
 console==0.9907
+cycler==0.11.0
 ezenv==0.92
+fonttools==4.33.2
 keyboard==0.13.5
+kiwisolver==1.4.2
+matplotlib==3.5.1
 mutagen==1.45.1
+numpy==1.22.3
+packaging==21.3
+Pillow==9.1.0
 pycparser==2.21
 pydub==0.25.1
 pygame==2.1.2
@@ -123,5 +130,8 @@ pyobjc-framework-VideoSubscriberAccount==8.4.1
 pyobjc-framework-VideoToolbox==8.4.1
 pyobjc-framework-Vision==8.4.1
 pyobjc-framework-WebKit==8.4.1
+pyparsing==3.0.8
+python-dateutil==2.8.2
 simpleaudio==1.0.4
+six==1.16.0
 vosk==0.3.30

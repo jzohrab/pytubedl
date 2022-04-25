@@ -4,6 +4,7 @@
 # TODO:
 # - popup:
 """
+- plot the sound? for fun
 - add double slider https://github.com/MenxLi/tkSliderWidget
 - respect double slider on playback
 - add buttons to reposition the start and end of the slider values, respecting max
@@ -203,6 +204,12 @@ class MusicPlayer:
         self.cancel_slider_updates()
 
 
+# TODO move to top
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+NavigationToolbar2Tk)
+
+
 class BookmarkWindow(object):
     """Stub popup window, to be used for bookmark/clip editing."""
 
@@ -269,6 +276,8 @@ class BookmarkWindow(object):
         self.music_player.reposition(bookmark.position_ms)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
+        self.plot()
+
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
         self.root.wait_visibility()
@@ -288,6 +297,38 @@ class BookmarkWindow(object):
         self.root.grab_release()
         self.bookmark.position_ms = float(self.entry.get())
         self.root.destroy()
+
+    # plot function is created for
+    # plotting the graph in
+    # tkinter window
+    def plot(self):
+
+        # the figure that will contain the plot
+        fig = Figure(figsize = (5, 5), dpi = 100)
+
+        # list of squares
+        y = [i**2 for i in range(101)]
+
+        # adding the subplot
+        plot1 = fig.add_subplot(111)
+
+        # plotting the graph
+        plot1.plot(y)
+
+        # creating the Tkinter canvas
+        # containing the Matplotlib figure
+        canvas = FigureCanvasTkAgg(fig, master = self.root)
+        canvas.draw()
+
+        # placing the canvas on the Tkinter window
+        canvas.get_tk_widget().grid(row=3, column=0, pady=20)
+
+        # creating the Matplotlib toolbar
+        # toolbar = NavigationToolbar2Tk(canvas, self.root)
+        # toolbar.update()
+
+        # placing the toolbar on the Tkinter window
+        # canvas.get_tk_widget().grid(row=4, column=0, pady=20)
 
 
 class MainWindow:
