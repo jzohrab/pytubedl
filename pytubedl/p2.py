@@ -79,9 +79,10 @@ class MusicPlayer:
         PLAYING = 2
         PAUSED = 3
 
-    def __init__(self, slider, slider_lbl):
+    def __init__(self, slider, slider_lbl, state_change_callback = None):
         self.slider = slider
         self.slider_lbl = slider_lbl
+        self.state_change_callback = state_change_callback
 
         self.state = MusicPlayer.State.NEW
         self.music_file = None
@@ -95,6 +96,16 @@ class MusicPlayer:
 
         self.slider.bind('<Button-1>', self.slider_click)
         self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, s):
+        self._state = s
+        if self.state_change_callback:
+            self.state_change_callback(s)
 
     def increment(self, i):
         self.reposition(float(self.slider.get()) + i)
@@ -187,6 +198,7 @@ class MusicPlayer:
         self.state = MusicPlayer.State.PAUSED
 
     def stop(self):
+        self.state = MusicPlayer.State.LOADED
         mixer.music.stop()
         self.cancel_slider_updates()
 
@@ -252,7 +264,7 @@ class BookmarkWindow(object):
         self.slider_max_lbl = Label(slider_frame, text=TimeUtils.time_string(to_val))
         self.slider_max_lbl.grid(row=2, column=3, pady=2)
 
-        self.music_player = MusicPlayer(self.slider, self.slider_lbl)
+        self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(bookmark.position_ms)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
@@ -264,13 +276,13 @@ class BookmarkWindow(object):
         self.root.transient(parent)
 
     def play_pause(self):
-        """If playing, will switch to paused."""
-        txt = 'Pause'
-        if self.music_player.state is MusicPlayer.State.PLAYING:
-            # Will pause, so change text to 'Play'.
-            txt = 'Play'
-        self.play_btn.configure(text = txt)
         self.music_player.play_pause()
+
+    def update_play_button_text(self, music_player_state):
+        txt = 'Play'
+        if music_player_state is MusicPlayer.State.PLAYING:
+            txt = 'Pause'
+        self.play_btn.configure(text = txt)
 
     def ok(self):
         self.root.grab_release()
@@ -377,7 +389,7 @@ class MainWindow:
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
 
-        self.music_player = MusicPlayer(self.slider, self.slider_lbl)
+        self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
     
         window.bind('<Key>', self.handle_key)
 
@@ -491,13 +503,13 @@ class MainWindow:
         self.reload_bookmark_list()
 
     def play_pause(self):
-        """If playing, will switch to paused."""
-        txt = 'Pause'
-        if self.music_player.state is MusicPlayer.State.PLAYING:
-            # Will pause, so change text to 'Play'.
-            txt = 'Play'
-        self.play_btn.configure(text = txt)
         self.music_player.play_pause()
+
+    def update_play_button_text(self, music_player_state):
+        txt = 'Play'
+        if music_player_state is MusicPlayer.State.PLAYING:
+            txt = 'Pause'
+        self.play_btn.configure(text = txt)
 
     def quit(self):
         self.music_player.stop()
