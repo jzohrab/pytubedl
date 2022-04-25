@@ -100,9 +100,11 @@ class MusicPlayer:
 
     def slider_click(self, event):
         """User is dragging the slider now, so don't update it."""
+        # print('got a slider click')
         self.cancel_slider_updates()
 
     def slider_unclick(self, event):
+        # print('got a slider UNclick')
         value_ms_f = float(self.slider.get())
         self.reposition(value_ms_f)
 
@@ -127,11 +129,15 @@ class MusicPlayer:
     def update_slider(self):
         current_pos_ms = mixer.music.get_pos()
         slider_pos = self.start_pos_ms + current_pos_ms
+        # print(f'update_slider, pos = {slider_pos}')
         if (current_pos_ms == -1 or slider_pos > self.song_length_ms):
             # Mixer.music goes to -1 when it reaches the end of the file.
             slider_pos = self.song_length_ms
+        # print(f'update_slider, now pos = {slider_pos}')
 
+        # print(f'old slider pos: {self.slider.get()}')
         self.slider.set(slider_pos)
+        # print(f'after set to {slider_pos}, new slider pos: {self.slider.get()}')
         self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
 
         if self.state is MusicPlayer.State.PLAYING:
@@ -157,9 +163,9 @@ class MusicPlayer:
 
         if self.state is MusicPlayer.State.LOADED:
             # First play, load and start.
-            mixer.music.play()
+            mixer.music.play(loops = 0, start = (self.start_pos_ms / 1000.0))
             self.state = MusicPlayer.State.PLAYING
-            self.start_pos_ms = 0
+            # self.start_pos_ms = 0
             self.update_slider()
 
         elif self.state is MusicPlayer.State.PLAYING:
@@ -191,9 +197,12 @@ class BookmarkWindow(object):
         # The "return value" of the dialog,
         # entered by user in self.entry Entry box.
         self.bookmark = bookmark
+        self.music_file = music_file
+        self.song_length_ms = song_length_ms
 
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
+        self.root.geometry('500x300')
 
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=1, column=0, pady=20)
@@ -207,22 +216,45 @@ class BookmarkWindow(object):
         self.ok_btn = Button(ctl_frame, text="ok", command=self.ok)
         self.ok_btn.grid(row=0, column=3, padx=10)
 
+        # Slider starts with 10s of padding on either side of the
+        # bookmark.
+        # TODO fix this to 10 s
+        padding_ms = 1 * 1000
+
+        from_val = int(max(0, bookmark.position_ms - padding_ms))
+        to_val = int(min(self.song_length_ms, bookmark.position_ms + padding_ms))
+
         slider_frame = Frame(self.root)
         slider_frame.grid(row=2, column=0, pady=20)
-        self.slider = ttk.Scale(
+
+        # Note: I tried using ttk.scale for better styling, but it was
+        # garbage.  The slider handle kept jumping out of the scale,
+        # and not respecting the from_ and to values of the scale
+        # (e.g., for from_=2500 and to=4500, a value of 3500 (right in
+        # the middle) would be shown about 75% along the scale, and
+        # for higher values it would disappear completely).
+        #
+        # ref https://stackoverflow.com/questions/71994893/
+        #   tkinter-ttk-scale-seems-broken-if-from-is-not-zero-mac-python-3-8-2-tcl-tk
+        self.slider = Scale(
             slider_frame,
-            from_=0,
-            to=100,
+            from_=from_val,
+            to=to_val,
             orient=HORIZONTAL,
-            value=0,
-            length=360)
-        self.slider.grid(row=1, column=1, pady=10)
+            length=150)
+        self.slider.grid(row=1, column=2, pady=10)
 
         self.slider_lbl = Label(slider_frame, text='')
-        self.slider_lbl.grid(row=2, column=1, pady=2)
+        self.slider_lbl.grid(row=2, column=2, pady=2)
+        self.slider_min_lbl = Label(slider_frame, text=TimeUtils.time_string(from_val))
+        self.slider_min_lbl.grid(row=2, column=1, pady=2)
+        self.slider_max_lbl = Label(slider_frame, text=TimeUtils.time_string(to_val))
+        self.slider_max_lbl.grid(row=2, column=3, pady=2)
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl)
         self.music_player.load_song(music_file, song_length_ms)
+        self.music_player.reposition(bookmark.position_ms)
+        # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
@@ -354,7 +386,7 @@ class MainWindow:
         self.hack_dev()
 
     def hack_dev(self):
-        self.add_bookmark(3000)
+        self.add_bookmark(3200)
         self.bookmarks_lst.activate(1)
         self.bookmarks_lst.select_set(1)
         self.popup_window()
