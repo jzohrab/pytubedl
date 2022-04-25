@@ -4,7 +4,8 @@
 # TODO:
 # - popup:
 """
-- slider with full song, and play and pause, reposition? - reuse existing code
+- MusicPlayer should (?) stop playing if it reaches the end of the clip ... or resize the slider box
+- add buttons to reposition the start and end of the slider values
 - set start and end of clip
 - display start/end of clip in list box (display())
 - transcribe
