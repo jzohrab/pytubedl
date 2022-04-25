@@ -186,12 +186,6 @@ class MusicPlayer:
 
 class MainWindow:
 
-    class State(Enum):
-        NEW = 0
-        LOADED = 1
-        PLAYING = 2
-        PAUSED = 3
-
     class Bookmark:
         """A bookmark or clip item, stored in bookmarks listbox"""
         def __init__(self, pos_ms):
@@ -228,7 +222,6 @@ class MainWindow:
         window.geometry('600x400')
         self.window = window
 
-        self.state = MainWindow.State.NEW
         self.music_file = None
         self.song_length_ms = 0
 
@@ -286,8 +279,6 @@ class MainWindow:
             value=0,
             length=360)
         self.slider.grid(row=0, column=1, pady=10)
-        # self.slider.bind('<Button-1>', self.slider_click)
-        # self.slider.bind('<ButtonRelease-1>', self.slider_unclick)
 
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
