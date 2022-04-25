@@ -362,18 +362,17 @@ class MainWindow:
         ctl_frame = Frame(master_frame)
         ctl_frame.grid(row=1, column=0, pady=20)
 
-        f = ('Times', 10)
-        load_btn = Button(ctl_frame, text='Load', width=10, font=f, command=self.load)
-        load_btn.grid(row=0, column=1, padx=10)
-        self.play_btn = Button(ctl_frame, text='Play', width=10, font=f, command=self.play_pause)
-        self.play_btn.grid(row=0, column=2, padx=10)
-        del_btn = Button(ctl_frame, text='Delete', width=10, font=f, command=self.delete_selected_bookmark)
-        del_btn.grid(row=0, column=3, padx=10)
-        quit_btn = Button(ctl_frame, text='Quit', width=10, font=f, command=self.quit)
-        quit_btn.grid(row=0, column=4, padx=10)
+        def _make_button(text, column, command):
+            f = ('Times', 10)
+            b = Button(ctl_frame, text=text, width=10, font=f, command=command)
+            b.grid(row=0, column=column, padx=10)
+            return b
 
-        button_bonus = Button(ctl_frame, text="Window", width=10, font=f, command=self.popup_window)
-        button_bonus.grid(row=0, column=5, padx=10)
+        _make_button('Load', 1, self.load)
+        self.play_btn = _make_button('Play', 2, self.play_pause)
+        self.del_btn =  _make_button('Delete', 3, self.delete_selected_bookmark)
+        self.clip_btn = _make_button('Clip', 4, self.popup_window)
+        _make_button('Quit', 5, self.quit)
 
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=2, column=0, pady=20)
