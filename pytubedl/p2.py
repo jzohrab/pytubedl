@@ -4,64 +4,41 @@
 # TODO:
 # - popup:
 """
-- add double slider https://github.com/MenxLi/tkSliderWidget
-- respect double slider on playback
-- add buttons to reposition the start and end of the slider values, respecting max
-- save start and end of clip
+- set start and end of clip
 - display start/end of clip in list box (display())
 - if bookmark already has start/end defined, use that to determine slider from/to, and double-slide
-- resave/replace
+- open form with bookmark with start and end
 - transcribe clip
-- add note?
 - save transcription etc
+
+- future work:
+- add double slider https://github.com/MenxLi/tkSliderWidget?
+- respect double slider on playback
+- add buttons to reposition the start and end of the slider values, respecting max
+- resave/replace
 """
 # - maybe "add note" to bookmark?
-# - change bookmark position
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
 # - transcribe clip w/ vosk
-# - export mp3 file to disk
+# - export clipped mp3 file to disk
 # - export card and transcription to anki
 #
 # - any other TODOs in the code.
 ###
 
+import numpy as np
+import tkinter.ttk as ttk
+import wave
 
+from enum import Enum
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from mutagen.mp3 import MP3
+from pydub import AudioSegment
+from pygame import mixer
 from tkinter import *
 from tkinter import filedialog
-from pygame import mixer
-from mutagen.mp3 import MP3
-from enum import Enum
-import tkinter.ttk as ttk
-
-
-class PopupWindow(object):
-    """Stub popup window, to be used for bookmark/clip editing."""
-
-    def __init__(self, parent, bookmark):
-        # The "return value" of the dialog,
-        # entered by user in self.entry Entry box.
-        self.bookmark = bookmark
-
-        self.root=Toplevel(parent)
-        self.root.protocol('WM_DELETE_WINDOW', self.ok)
-
-        self.entry = Entry(self.root)
-        self.entry.insert(END, bookmark.position_ms)
-        self.entry.pack()
-        self.ok_btn = Button(self.root, text="ok", command=self.ok)
-        self.ok_btn.pack()
-
-        # Modal window.
-        # Wait for visibility or grab_set doesn't seem to work.
-        self.root.wait_visibility()
-        self.root.grab_set()
-        self.root.transient(parent)
-
-    def ok(self):
-        self.root.grab_release()
-        self.bookmark.position_ms = float(self.entry.get())
-        self.root.destroy()
 
 
 class TimeUtils:
@@ -202,14 +179,6 @@ class MusicPlayer:
         mixer.music.stop()
         self.cancel_slider_updates()
 
-
-# TODO move to top
-from pydub import AudioSegment
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
-NavigationToolbar2Tk)
-import numpy as np
-import wave
 
 class BookmarkWindow(object):
     """Stub popup window, to be used for bookmark/clip editing."""
