@@ -258,12 +258,17 @@ class BookmarkWindow(object):
         #
         # ref https://stackoverflow.com/questions/71994893/
         #   tkinter-ttk-scale-seems-broken-if-from-is-not-zero-mac-python-3-8-2-tcl-tk
+        #
+        # Slider length had to be eyeballed here, as the matplotlib
+        # size is specified in inches.  I wasn't sure how to align the
+        # sizes easily.
+        sllen = 5 * 60
         self.slider = Scale(
             slider_frame,
             from_=self.from_val,
             to=self.to_val,
             orient=HORIZONTAL,
-            length= 5 * 60)
+            length= sllen)
         self.slider.grid(row=1, column=2, pady=10)
 
         self.slider_lbl = Label(slider_frame, text='')
