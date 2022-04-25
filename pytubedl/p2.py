@@ -184,6 +184,51 @@ class MusicPlayer:
         self.cancel_slider_updates()
 
 
+class BookmarkWindow(object):
+    """Stub popup window, to be used for bookmark/clip editing."""
+
+    def __init__(self, parent, bookmark):
+        # The "return value" of the dialog,
+        # entered by user in self.entry Entry box.
+        self.bookmark = bookmark
+
+        self.root=Toplevel(parent)
+        self.root.protocol('WM_DELETE_WINDOW', self.ok)
+
+        self.entry = Entry(self.root)
+        self.entry.insert(END, bookmark.position_ms)
+        self.entry.grid(row = 0, column = 1, padx = 10)
+        self.ok_btn = Button(self.root, text="ok", command=self.ok)
+        self.ok_btn.grid(row = 0, column = 2, padx = 10)
+
+        slider_frame = Frame(self.root)
+        slider_frame.grid(row=2, column=0, pady=20)
+        self.slider = ttk.Scale(
+            slider_frame,
+            from_=0,
+            to=100,
+            orient=HORIZONTAL,
+            value=0,
+            length=360)
+        self.slider.grid(row=1, column=1, pady=10)
+
+        self.slider_lbl = Label(slider_frame, text='')
+        self.slider_lbl.grid(row=2, column=1, pady=2)
+
+        self.music_player = MusicPlayer(self.slider, self.slider_lbl)
+
+        # Modal window.
+        # Wait for visibility or grab_set doesn't seem to work.
+        self.root.wait_visibility()
+        self.root.grab_set()
+        self.root.transient(parent)
+
+    def ok(self):
+        self.root.grab_release()
+        self.bookmark.position_ms = float(self.entry.get())
+        self.root.destroy()
+
+
 class MainWindow:
 
     class Bookmark:
@@ -290,13 +335,20 @@ class MainWindow:
         # during testing
         print("TEST HACK LOAD SONG")
         self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
+        self.hack_dev()
+
+    def hack_dev(self):
+        self.add_bookmark(3000)
+        self.bookmarks_lst.activate(1)
+        self.bookmarks_lst.select_set(1)
+        self.popup_window()
 
     def popup_window(self):
         i = self._selected_bookmark_index()
         if not i:
             return
         b = self.bookmarks[i]
-        d = PopupWindow(self.window, b)
+        d = BookmarkWindow(self.window, b)
         self.window.wait_window(d.root)
         d.root.grab_release()
         # Re-select, b/c switching to the pop-up deselects the current.
