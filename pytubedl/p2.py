@@ -34,6 +34,7 @@ import tkinter.ttk as ttk
 import wave
 
 from enum import Enum
+from matplotlib import pyplot
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
@@ -194,7 +195,7 @@ class BookmarkWindow(object):
 
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
-        self.root.geometry('500x300')
+        self.root.geometry('700x600')
 
         clip_frame = Frame(self.root)
         self.slider_min_lbl = Label(clip_frame, text=TimeUtils.time_string(0))
@@ -292,7 +293,16 @@ class BookmarkWindow(object):
     def clip_slider_unclick(self, event):
         self.clip_up_ms = self.clip_slider.get()
         self.cancel_clip_slider_updates()
-        self.save_and_shade_clip()
+        self.save_clip()
+        self.plot()
+        self.clip_slider.after(1000, self.aoeuaoeu)
+
+    def aoeuaoeu(self):
+        print('in aoeuaouae')
+        if self.axv:
+            self.axv.remove()
+            self.canvas.draw()
+
 
     def cancel_clip_slider_updates(self):
         print(f'cancelling updates, current = {self.clip_after_id}')
@@ -303,10 +313,10 @@ class BookmarkWindow(object):
     def clip_slider_update(self):
         print(f'  UPDATE, clip = {(self.clip_down_ms, self.clip_up_ms)}')
         self.clip_up_ms = self.clip_slider.get()
-        self.save_and_shade_clip()
+        self.save_clip()
         self.clip_after_id = self.clip_slider.after(500, self.clip_slider_update)
 
-    def save_and_shade_clip(self):
+    def save_clip(self):
         if (self.clip_down_ms is None or
             self.clip_up_ms is None or
             self.clip_up_ms < self.clip_down_ms):
@@ -314,7 +324,6 @@ class BookmarkWindow(object):
         self.clip_bounds_ms = (self.clip_down_ms, self.clip_up_ms)
         print(f'clip bounds: {self.clip_bounds_ms}')
         self.bookmark.clip_bounds_ms = self.clip_bounds_ms
-        self.plot()
 
     def play_pause(self):
         self.music_player.play_pause()
@@ -374,6 +383,7 @@ class BookmarkWindow(object):
             plot1.spines[x].set_visible(False)
         plot1.axes.get_xaxis().set_visible(False)
         plot1.axes.get_yaxis().set_visible(False)
+
         plot1.plot(self.signal_plot_data)
 
         # To shade a time span, we have to translate the time into the
@@ -387,11 +397,13 @@ class BookmarkWindow(object):
         if (cs is not None and ce is not None):
             shade_start = signal_array_index(cs)
             shade_end = signal_array_index(ce)
-            plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
+            self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
+            # a.remove()
 
-        canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
-        canvas.draw()
-        canvas.get_tk_widget().grid(row=3, column=0, pady=20)
+        self.canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
+        self.canvas.get_tk_widget().grid(row=3, column=0, pady=20)
+
+        self.canvas.draw()
 
         # Can't create Matplotlib toolbar, as it uses pack(), and we're already using grid().
         # toolbar = NavigationToolbar2Tk(canvas, self.root)
