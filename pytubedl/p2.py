@@ -6,6 +6,7 @@
 """
 - set start and end of clip
 - display start/end of clip in list box (display())
+- re-styling of form: graph at top, slider under that, buttons under that
 - if bookmark already has start/end defined, use that to determine slider from/to, and double-slide
 - open form with bookmark with start and end
 - transcribe clip
@@ -249,24 +250,39 @@ class BookmarkWindow(object):
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('500x400')
 
-        clip_frame = Frame(self.root)
-        self.slider_min_lbl = Label(clip_frame, text=TimeUtils.time_string(0))
-        self.slider_min_lbl.grid(row=1, column=1, pady=2)
-        self.slider_max_lbl = Label(clip_frame, text=TimeUtils.time_string(1000))
-        self.slider_max_lbl.grid(row=1, column=2, pady=2)
-        clip_frame.grid(row=0, column=0, pady=20)
+        # clip_frame = Frame(self.root)
+        # self.slider_min_lbl = Label(clip_frame, text=TimeUtils.time_string(0))
+        # self.slider_min_lbl.grid(row=1, column=1, pady=2)
+        # self.slider_max_lbl = Label(clip_frame, text=TimeUtils.time_string(1000))
+        # self.slider_max_lbl.grid(row=1, column=2, pady=2)
+        # clip_frame.grid(row=0, column=0, pady=20)
 
         ctl_frame = Frame(self.root)
-        ctl_frame.grid(row=1, column=0, pady=20)
+        def _control_row(row, lbl_text, btn_text, btn_command, initial_value=None):
+            # Need both width and anchor for text alignment to work.
+            lbl = Label(ctl_frame, text=lbl_text, width=10, anchor='e')
+            lbl.grid(row=row, column=1, pady=2)
 
-        self.entry = Entry(ctl_frame)
-        self.entry.insert(END, bookmark.position_ms)
-        self.entry.grid(row=0, column=1, padx=10)
-        f = ('Times', 10)
-        self.play_btn = Button(ctl_frame, text='Play', width=10, font=f, command=self.play_pause)
-        self.play_btn.grid(row=0, column=2, padx=10)
-        self.ok_btn = Button(ctl_frame, text="ok", command=self.ok)
-        self.ok_btn.grid(row=0, column=3, padx=10)
+            e = Entry(ctl_frame)
+            if initial_value:
+                e.insert(END, initial_value)
+            e.grid(row=row, column=2, padx=10)
+
+            btn = Button(ctl_frame, text=btn_text, width=10, command=btn_command)
+            btn.grid(row=row, column=3, padx=10)
+
+            return (e, btn)
+
+        self.entry, self.entry_btn = _control_row(0, 'Bookmark', 'Update', None, bookmark.position_ms)
+        self.b_start, self.start_btn = _control_row(1, 'Clip start', 'Update start', None)
+        self.b_end, self.end_btn = _control_row(2, 'Clip end', 'Update end', None)
+
+        self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
+        self.play_btn.grid(row=3, column=2, padx=10)
+        self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
+        self.ok_btn.grid(row=3, column=3, padx=10)
+
+        ctl_frame.grid(row=1, column=0, pady=20)
 
         # For bookmark, assume that the user clicked "bookmark"
         # *after* hearing something interesting -- so pad a bit more
@@ -413,7 +429,7 @@ class BookmarkWindow(object):
         ###     shade_end = signal_array_index(ce)
         ###     self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
-        self.canvas.draw()
+        # self.canvas.draw()
 
 
     ### Dead code, previously in __init__. Attempt to define clips
