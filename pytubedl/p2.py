@@ -304,6 +304,13 @@ class BookmarkWindow(object):
         self.clip_up_ms = self.clip_slider.get()
         self.clip_after_id = self.clip_slider.after(100, self.clip_slider_update)
 
+    def save_and_shade_clip(self):
+        if (self.clip_down_ms is None or
+            self.clip_up_ms is None or
+            self.clip_up_ms < self.clip_down_ms):
+            return
+        # TODO: re-plot with the shading.
+
     def play_pause(self):
         self.music_player.play_pause()
 
