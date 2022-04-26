@@ -66,9 +66,8 @@ class MusicPlayer:
         PLAYING = 2
         PAUSED = 3
 
-    def __init__(self, slider, slider_lbl, state_change_callback = None):
+    def __init__(self, slider, state_change_callback = None):
         self.slider = slider
-        self.slider_lbl = slider_lbl
         self.state_change_callback = state_change_callback
 
         self.state = MusicPlayer.State.NEW
@@ -133,7 +132,6 @@ class MusicPlayer:
             slider_pos = self.song_length_ms
 
         self.slider.set(slider_pos)
-        self.slider_lbl.configure(text=TimeUtils.time_string(slider_pos))
 
         if self.state is MusicPlayer.State.PLAYING:
             if slider_pos < self.slider.cget('to'):
@@ -335,6 +333,8 @@ class BookmarkWindow(object):
         slider_frame = Frame(self.root)
         slider_frame.grid(row=2, column=0, pady=20)
 
+        self.slider_var = DoubleVar()
+        
         # Slider length had to be eyeballed here, as the matplotlib
         # size is specified in inches.  I wasn't sure how to align the
         # sizes easily.
@@ -343,17 +343,23 @@ class BookmarkWindow(object):
             slider_frame,
             from_=self.from_val,
             to=self.to_val,
+            showvalue = 0, # Hide label.
             orient=HORIZONTAL,
             sliderlength = 10,
+            variable = self.slider_var,
             length= sllen)
         self.slider.grid(row=1, column=0, pady=10)
+
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=2, column=0, pady=2)
+        def update_slider_label(a, b, c):
+            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
+        self.slider_var.trace('w', update_slider_label)
 
         w = self.plot(slider_frame)
         w.grid(row=3, column=0, pady=20)
 
-        self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
+        self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(sl_start)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
@@ -642,19 +648,25 @@ class MainWindow:
 
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=2, column=0, pady=20)
+
+        self.slider_var = DoubleVar()
+
         self.slider = ttk.Scale(
             slider_frame,
             from_=0,
             to=100,
             orient=HORIZONTAL,
-            value=0,
+            variable = self.slider_var,
             length=360)
         self.slider.grid(row=0, column=1, pady=10)
 
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
+        def update_slider_label(a, b, c):
+            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
+        self.slider_var.trace('w', update_slider_label)
 
-        self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
+        self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
     
         window.bind('<Key>', self.handle_key)
 
