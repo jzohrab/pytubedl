@@ -190,7 +190,23 @@ class BookmarkWindow(object):
     """The Bookmark/Clip editor window.
 
     Future improvements
-    -------------------
+    ===================
+
+    Styling
+    -------
+
+    I tried using ttk.scale for better styling, but it was garbage.
+    The slider handle kept jumping out of the scale, and not
+    respecting the from_ and to values of the scale (e.g., for
+    from_=2500 and to=4500, a value of 3500 (right in the middle)
+    would be shown about 75% along the scale, and for higher values it
+    would disappear completely).
+
+    ref https://stackoverflow.com/questions/71994893/
+    tkinter-ttk-scale-seems-broken-if-from-is-not-zero-mac-python-3-8-2-tcl-tk
+
+    UI for clip selection
+    ---------------------
 
     The current design is good enough -- I can define clips reasonably
     quickly and easily.
@@ -237,6 +253,7 @@ class BookmarkWindow(object):
     work ... the spanslider couldn't be selected.  Perhaps this is due
     to grid being used, rather than pack ... not sure, didn't bother
     looking further.
+
     """
 
     def __init__(self, parent, bookmark, music_file, song_length_ms):
@@ -287,25 +304,17 @@ class BookmarkWindow(object):
         # For bookmark, assume that the user clicked "bookmark"
         # *after* hearing something interesting -- so pad a bit more
         # before than after.
-        # self.from_val and to_val are also used during plotting.
         pad_before = 10 * 1000
         pad_after = 5 * 1000
         self.from_val = int(max(0, bookmark.position_ms - pad_before))
         self.to_val = int(min(self.song_length_ms, bookmark.position_ms + pad_after))
 
+        # Pre-calc graphing data.  If from_val or to_val change, must recalc.
+        self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
+
         slider_frame = Frame(self.root)
         slider_frame.grid(row=2, column=0, pady=20)
 
-        # Note: I tried using ttk.scale for better styling, but it was
-        # garbage.  The slider handle kept jumping out of the scale,
-        # and not respecting the from_ and to values of the scale
-        # (e.g., for from_=2500 and to=4500, a value of 3500 (right in
-        # the middle) would be shown about 75% along the scale, and
-        # for higher values it would disappear completely).
-        #
-        # ref https://stackoverflow.com/questions/71994893/
-        #   tkinter-ttk-scale-seems-broken-if-from-is-not-zero-mac-python-3-8-2-tcl-tk
-        #
         # Slider length had to be eyeballed here, as the matplotlib
         # size is specified in inches.  I wasn't sure how to align the
         # sizes easily.
@@ -321,9 +330,8 @@ class BookmarkWindow(object):
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=2, column=0, pady=2)
 
-        self.slider_frame = slider_frame
-        self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
-        self.plot()
+        w = self.plot(slider_frame)
+        w.grid(row=3, column=0, pady=20)
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
@@ -390,14 +398,15 @@ class BookmarkWindow(object):
         )
         return (time, signal)
 
-    def plot(self):
+    def plot(self, frame):
+        """Draws plot, returns widget for subsequent placement."""
+
         fig, plot1 = plt.subplots()
         fig.set_size_inches(5, 1)
 
         # https://stackoverflow.com/questions/40325321/
         #  python-embed-a-matplotlib-plot-with-slider-in-tkinter-properly
-        self.canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
-        self.canvas.get_tk_widget().grid(row=3, column=0, pady=20)
+        canvas = FigureCanvasTkAgg(fig, master = frame)
 
         # ref https://stackoverflow.com/questions/2176424/
         #   hiding-axis-text-in-matplotlib-plots
@@ -429,7 +438,9 @@ class BookmarkWindow(object):
         ###     shade_end = signal_array_index(ce)
         ###     self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
-        # self.canvas.draw()
+        return canvas.get_tk_widget()
+
+        # canvas.draw()
 
 
     ### Dead code, previously in __init__. Attempt to define clips
