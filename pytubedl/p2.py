@@ -184,7 +184,6 @@ class MusicPlayer:
 
 
 class BookmarkWindow(object):
-    """Stub popup window, to be used for bookmark/clip editing."""
 
     def __init__(self, parent, bookmark, music_file, song_length_ms):
         # The "return value" of the dialog,
@@ -252,6 +251,7 @@ class BookmarkWindow(object):
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=2, column=0, pady=2)
         self.plot(slider_frame, 3, 0)
+
         self.clip_slider = Scale(
             slider_frame,
             from_=self.from_val,
@@ -259,6 +259,12 @@ class BookmarkWindow(object):
             orient=HORIZONTAL,
             length= sllen)
         self.clip_slider.grid(row=4, column=0, pady=10)
+        self.clip_slider.bind('<Button-1>', self.clip_slider_click)
+        self.clip_slider.bind('<ButtonRelease-1>', self.clip_slider_unclick)
+
+        self.clip_down_ms = None
+        self.clip_up_ms = None
+        self.clip_after_id = None
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
@@ -271,6 +277,32 @@ class BookmarkWindow(object):
         self.root.wait_visibility()
         self.root.grab_set()
         self.root.transient(parent)
+
+
+    def clip_slider_click(self, event):
+        print('clickety-click down')
+        self.cancel_clip_slider_updates()
+        self.clip_down_ms = self.clip_slider.get()
+        self.clip_up_ms = None
+        print(f'  clip = {(self.clip_down_ms, self.clip_up_ms)}')
+        self.clip_slider_update()
+
+    def clip_slider_unclick(self, event):
+        print('clickety-click up')
+        self.cancel_clip_slider_updates()
+        self.clip_up_ms = self.clip_slider.get()
+        print(f'  clip = {(self.clip_down_ms, self.clip_up_ms)}')
+
+    def cancel_clip_slider_updates(self):
+        print(f'cancelling updates, current = {self.clip_after_id}')
+        if self.clip_after_id is not None:
+            self.clip_slider.after_cancel(self.clip_after_id)
+        self.clip_after_id = None
+
+    def clip_slider_update(self):
+        print(f'  UPDATE, clip = {(self.clip_down_ms, self.clip_up_ms)}')
+        self.clip_up_ms = self.clip_slider.get()
+        self.clip_after_id = self.clip_slider.after(100, self.clip_slider_update)
 
     def play_pause(self):
         self.music_player.play_pause()
