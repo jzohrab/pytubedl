@@ -381,6 +381,10 @@ class BookmarkWindow(object):
         #   hiding-axis-text-in-matplotlib-plots
         for x in ['left', 'right', 'top', 'bottom']:
             plot1.spines[x].set_visible(False)
+        plot1.set_xticklabels([])
+        plot1.set_xticks([])
+        plot1.set_yticklabels([])
+        plot1.set_yticks([])
         plot1.axes.get_xaxis().set_visible(False)
         plot1.axes.get_yaxis().set_visible(False)
 
