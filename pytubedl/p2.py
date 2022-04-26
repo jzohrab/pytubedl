@@ -308,7 +308,6 @@ class BookmarkWindow(object):
         # examples about plotting .wav files,
         # e.g. https://www.geeksforgeeks.org/plotting-various-sounds-on-graphs-using-python-and-matplotlib/
         signal = None
-        time = None
         from tempfile import NamedTemporaryFile  # TODO move up
         print('about to load data')
         with NamedTemporaryFile("w+b", suffix=".wav") as f:
@@ -317,11 +316,6 @@ class BookmarkWindow(object):
             f_rate = raw.getframerate()
             signal = raw.readframes(-1)
             signal = np.frombuffer(signal, dtype = 'int16')
-            time = np.linspace(
-                0, # start
-                len(signal) / f_rate,
-                num = len(signal)
-            )
         print('loaded data')
 
         fig = Figure(figsize = (5, 1))
@@ -345,19 +339,16 @@ class BookmarkWindow(object):
         plot1.plot(signal)
         print('plotted')
 
-        # To shade a span, have to find that span in the signal array.
-        # 0 = self.from_val
-        # len(signal) = self.to_val
-        def index_of_time_in_signal(t):
-            siglen = len(signal)
+        # To shade a time span, we have to translate the time into the
+        # corresponding index in the signal array.
+        def signal_array_index(t_ms):
             span = self.to_val - self.from_val
-            pos = t - self.from_val
-            pct = pos / span
-            return siglen * pct
+            pct = (t_ms - self.from_val) / span
+            return len(signal) * pct
 
         delta = (self.to_val - self.from_val) / 3
-        shade_start = index_of_time_in_signal(self.from_val + delta)
-        shade_end = index_of_time_in_signal(self.to_val - delta)
+        shade_start = signal_array_index(self.from_val + delta)
+        shade_end = signal_array_index(self.to_val - delta)
         ax.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
         canvas = FigureCanvasTkAgg(fig, master = frame)
