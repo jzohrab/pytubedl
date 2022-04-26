@@ -250,7 +250,9 @@ class BookmarkWindow(object):
         self.slider.grid(row=1, column=0, pady=10)
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=2, column=0, pady=2)
-        self.plot(slider_frame, 3, 0)
+
+        self.slider_frame = slider_frame
+        self.plot()
 
         self.clip_slider = Scale(
             slider_frame,
@@ -340,7 +342,7 @@ class BookmarkWindow(object):
         return BookmarkWindow._full_audio_segment
             
 
-    def plot(self, frame, row, column):
+    def plot(self):
 
         sound = BookmarkWindow.getFullAudioSegment(self.music_file)
         sound = sound[self.from_val : self.to_val]
@@ -352,35 +354,24 @@ class BookmarkWindow(object):
         # examples about plotting .wav files,
         # e.g. https://www.geeksforgeeks.org/plotting-various-sounds-on-graphs-using-python-and-matplotlib/
         signal = None
-        print('about to load data')
         with NamedTemporaryFile("w+b", suffix=".wav") as f:
             sound.export(f.name, format='wav')
             raw = wave.open(f.name, "r")
             f_rate = raw.getframerate()
             signal = raw.readframes(-1)
             signal = np.frombuffer(signal, dtype = 'int16')
-        print('loaded data')
 
         fig = Figure(figsize = (5, 1))
         plot1 = fig.add_subplot(111)
 
         # ref https://stackoverflow.com/questions/2176424/hiding-axis-text-in-matplotlib-plots
         ax = plot1
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.set_xticklabels([])
-        ax.set_xticks([])
+        for x in ['left', 'right', 'top', 'bottom']:
+            plot1.spines[x].set_visible(False)
         ax.axes.get_xaxis().set_visible(False)
-
-        ax.spines['left'].set_visible(False)
-        ax.set_yticklabels([])
-        ax.set_yticks([])
         ax.axes.get_yaxis().set_visible(False)
 
-        print('about to plot')
         plot1.plot(signal)
-        print('plotted')
 
         # To shade a time span, we have to translate the time into the
         # corresponding index in the signal array.
@@ -394,11 +385,9 @@ class BookmarkWindow(object):
         shade_end = signal_array_index(self.to_val - delta)
         ax.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
-        canvas = FigureCanvasTkAgg(fig, master = frame)
+        canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
         canvas.draw()
-
-        # placing the canvas on the Tkinter window
-        canvas.get_tk_widget().grid(row=row, column=column, pady=20)
+        canvas.get_tk_widget().grid(row=3, column=0, pady=20)
 
         # Can't create Matplotlib toolbar, as it uses pack(), and we're already using grid().
         # toolbar = NavigationToolbar2Tk(canvas, self.root)
