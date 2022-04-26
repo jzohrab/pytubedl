@@ -247,6 +247,7 @@ class BookmarkWindow(object):
             from_=self.from_val,
             to=self.to_val,
             orient=HORIZONTAL,
+            sliderlength = 10,
             length= sllen)
         self.slider.grid(row=1, column=0, pady=10)
         self.slider_lbl = Label(slider_frame, text='')
@@ -363,7 +364,13 @@ class BookmarkWindow(object):
             f_rate = raw.getframerate()
             signal = raw.readframes(-1)
             signal = np.frombuffer(signal, dtype = 'int16')
-        return signal
+
+        time = np.linspace(
+            0, # start
+            len(signal) / f_rate,
+            num = len(signal)
+        )
+        return (time, signal)
 
     def plot(self):
         fig = Figure(figsize = (5, 1))
@@ -372,16 +379,20 @@ class BookmarkWindow(object):
         # ref https://stackoverflow.com/questions/2176424/
         #   hiding-axis-text-in-matplotlib-plots
         for x in ['left', 'right', 'top', 'bottom']:
-            plot1.spines[x].set_visible(False)
+            plot1.spines[x].set_visible(True)
         plot1.set_xticklabels([])
         plot1.set_xticks([])
         plot1.set_yticklabels([])
         plot1.set_yticks([])
-        plot1.axes.get_xaxis().set_visible(False)
-        plot1.axes.get_yaxis().set_visible(False)
+        plot1.axes.get_xaxis().set_visible(True)
+        plot1.axes.get_yaxis().set_visible(True)
 
-        plot1.plot(self.signal_plot_data)
+        time, signal = self.signal_plot_data
+        plot1.plot(signal)
 
+        # Note we can also do lot1.plot(time, signal), but that
+        # doesn't work well with axvspans, as far as I can tell.
+        
         # To shade a time span, we have to translate the time into the
         # corresponding index in the signal array.
         def signal_array_index(t_ms):
