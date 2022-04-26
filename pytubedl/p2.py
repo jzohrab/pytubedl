@@ -1,33 +1,33 @@
 #####
 # Clip player
 #
-# TODO:
-# - popup:
-"""
-- save start and end of clip to bookmark
-- display start/end of clip in list box (display())
-- re-styling of form: graph at top, slider under that, buttons under that
-- if bookmark already has start/end defined, use that to determine slider from/to, and double-slide
-- open form with bookmark with start and end
-- transcribe clip
-- save transcription etc
-
-- future work:
-- add double slider https://github.com/MenxLi/tkSliderWidget?
-- respect double slider on playback
-- add buttons to reposition the start and end of the slider values, respecting max
-- resave/replace
-"""
-# - "save" and "import" to load all bookmarks and stuff
-
-# - maybe "add note" to bookmark?
+#
+# MVP TODO (usable for me)
+# - popup: add "play clip" button
+# - popup: change slider label (somehow?) to show time 00m00.0s
+# - popup: re-styling of form: graph at top, slider under that, buttons under that
+# - popup: transcribe clip w/ vosk
+# - save transcription to bookmark object
+# - show start of transcription in bookmark description ?
+# - add "bookmark" button to main screen
+# - restyle main screen:
+#   - slider at top, then slider buttons, then bookmark list, then bk buttons
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
-# - transcribe clip w/ vosk
 # - export clipped mp3 file to disk
-# - export card and transcription to anki
-#
+# - export card and transcription to anki, hardcoded destination
 # - any other TODOs in the code.
+
+# Future TODOs:
+# - configurable anki save destination
+# - "save" and "import" to load all bookmarks and stuff
+# - maybe "add note" to bookmark?
+# - clip editor popup:
+#   - add double slider https://github.com/MenxLi/tkSliderWidget?
+#   - respect double slider on playback
+#   - add buttons to reposition the start and end of the slider values, respecting max
+#   - resave/replace
+
 ###
 
 import numpy as np
@@ -296,16 +296,31 @@ class BookmarkWindow(object):
 
             return (e, btn)
 
-        clip_start, clip_end = (None, None)
-        if bookmark.clip_bounds_ms:
-            clip_start, clip_end = bookmark.clip_bounds_ms
+        def nz(a, b): return b if a is None else a
+
+        clip_bounds = nz(bookmark.clip_bounds_ms, (None, None))
+        sl_start = nz(clip_bounds[0], bookmark.position_ms)
+
+        m = bookmark.position_ms
+        sl_min, sl_max = nz(bookmark.clip_bounds_ms, (m, m))
+        padding = 5000
+        sl_max += padding
+        if clip_bounds[0] is not None:
+            sl_min -= padding
+        else:
+            # For bookmarks (clip not defined yet), assume that the user
+            # clicked "bookmark" *after* hearing something interesting --
+            # so pad a bit more before than after.
+            sl_min -= 3 * padding
+        self.from_val = int(max(0, sl_min))
+        self.to_val = int(min(self.song_length_ms, sl_max))
 
         self.entry, self.entry_btn = _control_row(
             0, 'Bookmark', 'Update', bookmark.position_ms)
         self.b_start, self.start_btn = _control_row(
-            1, 'Clip start', 'Update start', clip_start)
+            1, 'Clip start', 'Update start', clip_bounds[0])
         self.b_end, self.end_btn = _control_row(
-            2, 'Clip end', 'Update end', clip_end)
+            2, 'Clip end', 'Update end', clip_bounds[1])
 
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
         self.play_btn.grid(row=3, column=2, padx=10)
@@ -313,14 +328,6 @@ class BookmarkWindow(object):
         self.ok_btn.grid(row=3, column=3, padx=10)
 
         ctl_frame.grid(row=1, column=0, pady=20)
-
-        # For bookmark, assume that the user clicked "bookmark"
-        # *after* hearing something interesting -- so pad a bit more
-        # before than after.
-        pad_before = 10 * 1000
-        pad_after = 5 * 1000
-        self.from_val = int(max(0, bookmark.position_ms - pad_before))
-        self.to_val = int(min(self.song_length_ms, bookmark.position_ms + pad_after))
 
         # Pre-calc graphing data.  If from_val or to_val change, must recalc.
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
@@ -348,7 +355,7 @@ class BookmarkWindow(object):
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
-        self.music_player.reposition(bookmark.position_ms)
+        self.music_player.reposition(sl_start)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
         # Modal window.
@@ -561,6 +568,8 @@ class MainWindow:
 
         @property
         def clip_bounds_ms(self):
+            if self._clip_start_ms is None:
+                return None
             return (self._clip_start_ms, self._clip_end_ms)
 
         @clip_bounds_ms.setter
