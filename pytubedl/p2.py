@@ -35,6 +35,7 @@ import wave
 
 from enum import Enum
 from matplotlib import pyplot
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
@@ -185,6 +186,57 @@ class MusicPlayer:
 
 
 class BookmarkWindow(object):
+    """The Bookmark/Clip editor window.
+
+    Future improvements
+    -------------------
+
+    The current design is good enough -- I can define clips reasonably
+    quickly and easily.
+
+    I had tried to use a separate slider to define the "start and end"
+    of the clip, but it was a hassle.  The matplotlib chart of the
+    waveform didn't line up accurately with the slider position, and
+    it just felt inaccurate.  Using buttons and going by feel was
+    better.
+
+    Ideally, the design/UI for this would be something like Audacity's
+    "clip selection", where the user clicks and drags a range on a
+    plotted chart of the audio waveform.  I tried various versions of
+    this, but couldn't get it to work reasonably:
+
+    Attempt 1: using axvspans on the chart.
+
+    In the plot() method, you can convert the bookmark clip bounds to
+    the corresponding axis positions on the chart, and then use
+    axvspans:
+
+        # To shade a time span, we have to translate the time into the
+        # corresponding index in the signal array.
+        def signal_array_index(t_ms):
+            span = self.to_val - self.from_val
+            pct = (t_ms - self.from_val) / span
+            return len(self.signal_plot_data) * pct
+
+        cs, ce = self.bookmark.clip_bounds_ms
+        if (cs is not None and ce is not None):
+            shade_start = signal_array_index(cs)
+            shade_end = signal_array_index(ce)
+            self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
+
+    I was hoping to use this to do on-the-fly updates of the chart as
+    the user dragged a slider bar, but the performance was terrible.
+
+    Attempt 2: using matplotlib.widgets.SpanSelector
+
+    Per https://stackoverflow.com/questions/40325321/
+    python-embed-a-matplotlib-plot-with-slider-in-tkinter-properly, it
+    appears that we can use the spanselector in tkinter, but when I
+    tried using the bare minimum code in this app's windows, it didn't
+    work ... the spanslider couldn't be selected.  Perhaps this is due
+    to grid being used, rather than pack ... not sure, didn't bother
+    looking further.
+    """
 
     def __init__(self, parent, bookmark, music_file, song_length_ms):
         # The "return value" of the dialog,
@@ -195,7 +247,7 @@ class BookmarkWindow(object):
 
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
-        self.root.geometry('700x600')
+        self.root.geometry('500x400')
 
         clip_frame = Frame(self.root)
         self.slider_min_lbl = Label(clip_frame, text=TimeUtils.time_string(0))
@@ -257,66 +309,16 @@ class BookmarkWindow(object):
         self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
         self.plot()
 
-        self.clip_slider = Scale(
-            slider_frame,
-            from_=self.from_val,
-            to=self.to_val,
-            orient=HORIZONTAL,
-            length= sllen)
-        self.clip_slider.grid(row=4, column=0, pady=10)
-        self.clip_slider.bind('<Button-1>', self.clip_slider_click)
-        self.clip_slider.bind('<ButtonRelease-1>', self.clip_slider_unclick)
-
-        self.clip_down_ms = None
-        self.clip_up_ms = None
-        self.clip_after_id = None
-        self.clip_bounds_ms = (None, None)
-
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(bookmark.position_ms)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
-
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
         self.root.wait_visibility()
         self.root.grab_set()
         self.root.transient(parent)
-
-
-    def clip_slider_click(self, event):
-        self.clip_down_ms = self.clip_slider.get()
-        self.clip_up_ms = None
-        self.cancel_clip_slider_updates()
-        self.clip_slider_update()
-
-    def clip_slider_unclick(self, event):
-        self.clip_up_ms = self.clip_slider.get()
-        self.cancel_clip_slider_updates()
-        self.save_clip()
-        self.plot()
-
-    def cancel_clip_slider_updates(self):
-        print(f'cancelling updates, current = {self.clip_after_id}')
-        if self.clip_after_id is not None:
-            self.clip_slider.after_cancel(self.clip_after_id)
-        self.clip_after_id = None
-
-    def clip_slider_update(self):
-        print(f'  UPDATE, clip = {(self.clip_down_ms, self.clip_up_ms)}')
-        self.clip_up_ms = self.clip_slider.get()
-        self.save_clip()
-        self.clip_after_id = self.clip_slider.after(500, self.clip_slider_update)
-
-    def save_clip(self):
-        if (self.clip_down_ms is None or
-            self.clip_up_ms is None or
-            self.clip_up_ms < self.clip_down_ms):
-            return
-        self.clip_bounds_ms = (self.clip_down_ms, self.clip_up_ms)
-        print(f'clip bounds: {self.clip_bounds_ms}')
-        self.bookmark.clip_bounds_ms = self.clip_bounds_ms
 
     def play_pause(self):
         self.music_player.play_pause()
@@ -373,23 +375,27 @@ class BookmarkWindow(object):
         return (time, signal)
 
     def plot(self):
-        fig = Figure(figsize = (5, 1))
-        plot1 = fig.add_subplot(111)
+        fig, plot1 = plt.subplots()
+        fig.set_size_inches(5, 1)
+
+        # https://stackoverflow.com/questions/40325321/
+        #  python-embed-a-matplotlib-plot-with-slider-in-tkinter-properly
+        self.canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
+        self.canvas.get_tk_widget().grid(row=3, column=0, pady=20)
 
         # ref https://stackoverflow.com/questions/2176424/
         #   hiding-axis-text-in-matplotlib-plots
         for x in ['left', 'right', 'top', 'bottom']:
-            plot1.spines[x].set_visible(True)
+            plot1.spines[x].set_visible(False)
         plot1.set_xticklabels([])
         plot1.set_xticks([])
         plot1.set_yticklabels([])
         plot1.set_yticks([])
-        plot1.axes.get_xaxis().set_visible(True)
-        plot1.axes.get_yaxis().set_visible(True)
+        plot1.axes.get_xaxis().set_visible(False)
+        plot1.axes.get_yaxis().set_visible(False)
 
         time, signal = self.signal_plot_data
         plot1.plot(signal)
-
         # Note we can also do lot1.plot(time, signal), but that
         # doesn't work well with axvspans, as far as I can tell.
         
@@ -400,22 +406,68 @@ class BookmarkWindow(object):
             pct = (t_ms - self.from_val) / span
             return len(self.signal_plot_data) * pct
 
-        cs, ce = self.bookmark.clip_bounds_ms
-        if (cs is not None and ce is not None):
-            shade_start = signal_array_index(cs)
-            shade_end = signal_array_index(ce)
-            self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
-            # a.remove()
-
-        self.canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
-        self.canvas.get_tk_widget().grid(row=3, column=0, pady=20)
+        ## Deactivating shading code for now.
+        ### cs, ce = self.bookmark.clip_bounds_ms
+        ### if (cs is not None and ce is not None):
+        ###     shade_start = signal_array_index(cs)
+        ###     shade_end = signal_array_index(ce)
+        ###     self.axv = plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
         self.canvas.draw()
 
-        # Can't create Matplotlib toolbar, as it uses pack(), and we're already using grid().
-        # toolbar = NavigationToolbar2Tk(canvas, self.root)
-        # toolbar.update()
-        # canvas.get_tk_widget().grid(row=4, column=0, pady=20)
+
+    ### Dead code, previously in __init__. Attempt to define clips
+    ### using a slider.  Keeping this in case it's useful in the
+    ### future.
+    #
+    ### self.clip_slider = Scale(
+    ###     slider_frame,
+    ###     from_=self.from_val,
+    ###     to=self.to_val,
+    ###     orient=HORIZONTAL,
+    ###     length= sllen)
+    ### self.clip_slider.grid(row=4, column=0, pady=10)
+    ### self.clip_slider.bind('<Button-1>', self.clip_slider_click)
+    ### self.clip_slider.bind('<ButtonRelease-1>', self.clip_slider_unclick)
+    ### self.clip_down_ms = None
+    ### self.clip_up_ms = None
+    ### self.clip_after_id = None
+    ### self.clip_bounds_ms = (None, None)
+
+    ### Dead code. Attempt to define clips using a slider.
+    ### Keeping this in case it's useful in the future.
+    ### def clip_slider_click(self, event):
+    ###     self.clip_down_ms = self.clip_slider.get()
+    ###     self.clip_up_ms = None
+    ###     self.cancel_clip_slider_updates()
+    ###     self.clip_slider_update()
+
+    ### def clip_slider_unclick(self, event):
+    ###     self.clip_up_ms = self.clip_slider.get()
+    ###     self.cancel_clip_slider_updates()
+    ###     self.save_clip()
+    ###     self.plot()
+
+    ### def cancel_clip_slider_updates(self):
+    ###     print(f'cancelling updates, current = {self.clip_after_id}')
+    ###     if self.clip_after_id is not None:
+    ###         self.clip_slider.after_cancel(self.clip_after_id)
+    ###     self.clip_after_id = None
+
+    ### def clip_slider_update(self):
+    ###     print(f'  UPDATE, clip = {(self.clip_down_ms, self.clip_up_ms)}')
+    ###     self.clip_up_ms = self.clip_slider.get()
+    ###     self.save_clip()
+    ###     self.clip_after_id = self.clip_slider.after(500, self.clip_slider_update)
+
+    ### def save_clip(self):
+    ###     if (self.clip_down_ms is None or
+    ###         self.clip_up_ms is None or
+    ###         self.clip_up_ms < self.clip_down_ms):
+    ###         return
+    ###     self.clip_bounds_ms = (self.clip_down_ms, self.clip_up_ms)
+    ###     print(f'clip bounds: {self.clip_bounds_ms}')
+    ###     self.bookmark.clip_bounds_ms = self.clip_bounds_ms
 
 
 class MainWindow:
