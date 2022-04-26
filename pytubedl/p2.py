@@ -4,7 +4,7 @@
 # TODO:
 # - popup:
 """
-- set start and end of clip
+- save start and end of clip to bookmark
 - display start/end of clip in list box (display())
 - re-styling of form: graph at top, slider under that, buttons under that
 - if bookmark already has start/end defined, use that to determine slider from/to, and double-slide
@@ -275,6 +275,11 @@ class BookmarkWindow(object):
         # clip_frame.grid(row=0, column=0, pady=20)
 
         ctl_frame = Frame(self.root)
+        def update_entry(e):
+            e.delete(0,END)
+            e.insert(0, self.slider.get())
+
+
         def _control_row(row, lbl_text, btn_text, btn_command, initial_value=None):
             # Need both width and anchor for text alignment to work.
             lbl = Label(ctl_frame, text=lbl_text, width=10, anchor='e')
@@ -285,14 +290,18 @@ class BookmarkWindow(object):
                 e.insert(END, initial_value)
             e.grid(row=row, column=2, padx=10)
 
-            btn = Button(ctl_frame, text=btn_text, width=10, command=btn_command)
+            lam = lambda: update_entry(e)
+            btn = Button(ctl_frame, text=btn_text, width=10, command=lam)
             btn.grid(row=row, column=3, padx=10)
 
             return (e, btn)
 
-        self.entry, self.entry_btn = _control_row(0, 'Bookmark', 'Update', None, bookmark.position_ms)
-        self.b_start, self.start_btn = _control_row(1, 'Clip start', 'Update start', None)
-        self.b_end, self.end_btn = _control_row(2, 'Clip end', 'Update end', None)
+        self.entry, self.entry_btn = _control_row(
+            0, 'Bookmark', 'Update', None, bookmark.position_ms)
+        self.b_start, self.start_btn = _control_row(
+            1, 'Clip start', 'Update start', None)
+        self.b_end, self.end_btn = _control_row(
+            2, 'Clip end', 'Update end', None)
 
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
         self.play_btn.grid(row=3, column=2, padx=10)
@@ -353,9 +362,25 @@ class BookmarkWindow(object):
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
+    def set_clip_bounds(self):
+        try:
+            s = self.b_start.get()
+            e = self.b_end.get()
+            valid_clip = (
+                s is not None and
+                s != '' and
+                e is not None and
+                e != '' and
+                float(s) < float(e))
+            if valid_clip:
+                self.bookmark.clip_bounds_ms = (float(s), float(e))
+        except:
+            print(f'bad clip bounds? {(self.b_start.get(), self.b_end.get())}')
+
     def ok(self):
         self.root.grab_release()
         self.bookmark.position_ms = float(self.entry.get())
+        self.set_clip_bounds()
         self.root.destroy()
 
     _full_audio_segment = None
@@ -506,8 +531,19 @@ class MainWindow:
             self._clip_start_ms = None
             self._clip_end_ms = None
 
+        def clipdisplay(self):
+            s, e = (self._clip_start_ms, self._clip_end_ms)
+            if s is None or e is None:
+                return None
+            s = TimeUtils.time_string(s)
+            e = TimeUtils.time_string(e)
+            return f"Clip {s} - {e}"
+
         def display(self):
             """String description of this for display in list boxes."""
+            cd = self.clipdisplay()
+            if cd is not None:
+                return cd
             return f"Bookmark {TimeUtils.time_string(self._pos_ms)}"
 
         @property
