@@ -17,6 +17,8 @@
 - add buttons to reposition the start and end of the slider values, respecting max
 - resave/replace
 """
+# - "save" and "import" to load all bookmarks and stuff
+
 # - maybe "add note" to bookmark?
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
@@ -340,8 +342,23 @@ class BookmarkWindow(object):
         ax.axes.get_yaxis().set_visible(False)
 
         print('about to plot')
-        plot1.plot(time, signal)
+        plot1.plot(signal)
         print('plotted')
+
+        # To shade a span, have to find that span in the signal array.
+        # 0 = self.from_val
+        # len(signal) = self.to_val
+        def index_of_time_in_signal(t):
+            siglen = len(signal)
+            span = self.to_val - self.from_val
+            pos = t - self.from_val
+            pct = pos / span
+            return siglen * pct
+
+        delta = (self.to_val - self.from_val) / 3
+        shade_start = index_of_time_in_signal(self.from_val + delta)
+        shade_end = index_of_time_in_signal(self.to_val - delta)
+        ax.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
         canvas = FigureCanvasTkAgg(fig, master = frame)
         canvas.draw()
