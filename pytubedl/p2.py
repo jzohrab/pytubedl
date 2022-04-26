@@ -252,6 +252,7 @@ class BookmarkWindow(object):
         self.slider_lbl.grid(row=2, column=0, pady=2)
 
         self.slider_frame = slider_frame
+        self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
         self.plot()
 
         self.clip_slider = Scale(
@@ -342,10 +343,9 @@ class BookmarkWindow(object):
         return BookmarkWindow._full_audio_segment
             
 
-    def plot(self):
-
+    def get_signal_plot_data(self, from_val, to_val):
         sound = BookmarkWindow.getFullAudioSegment(self.music_file)
-        sound = sound[self.from_val : self.to_val]
+        sound = sound[from_val : to_val]
         sound = sound.set_channels(1)
 
         # Hack for plotting: export to a .wav file.  I can't
@@ -360,30 +360,32 @@ class BookmarkWindow(object):
             f_rate = raw.getframerate()
             signal = raw.readframes(-1)
             signal = np.frombuffer(signal, dtype = 'int16')
+        return signal
+
+    def plot(self):
 
         fig = Figure(figsize = (5, 1))
         plot1 = fig.add_subplot(111)
 
         # ref https://stackoverflow.com/questions/2176424/hiding-axis-text-in-matplotlib-plots
-        ax = plot1
         for x in ['left', 'right', 'top', 'bottom']:
             plot1.spines[x].set_visible(False)
-        ax.axes.get_xaxis().set_visible(False)
-        ax.axes.get_yaxis().set_visible(False)
+        plot1.axes.get_xaxis().set_visible(False)
+        plot1.axes.get_yaxis().set_visible(False)
 
-        plot1.plot(signal)
+        plot1.plot(self.signal_plot_data)
 
         # To shade a time span, we have to translate the time into the
         # corresponding index in the signal array.
         def signal_array_index(t_ms):
             span = self.to_val - self.from_val
             pct = (t_ms - self.from_val) / span
-            return len(signal) * pct
+            return len(self.signal_plot_data) * pct
 
         delta = (self.to_val - self.from_val) / 3
         shade_start = signal_array_index(self.from_val + delta)
         shade_end = signal_array_index(self.to_val - delta)
-        ax.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
+        plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
         canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
         canvas.draw()
