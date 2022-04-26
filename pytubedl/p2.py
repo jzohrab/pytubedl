@@ -295,14 +295,6 @@ class BookmarkWindow(object):
         self.cancel_clip_slider_updates()
         self.save_clip()
         self.plot()
-        self.clip_slider.after(1000, self.aoeuaoeu)
-
-    def aoeuaoeu(self):
-        print('in aoeuaouae')
-        if self.axv:
-            self.axv.remove()
-            self.canvas.draw()
-
 
     def cancel_clip_slider_updates(self):
         print(f'cancelling updates, current = {self.clip_after_id}')
