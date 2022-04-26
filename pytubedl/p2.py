@@ -268,6 +268,7 @@ class BookmarkWindow(object):
         self.clip_down_ms = None
         self.clip_up_ms = None
         self.clip_after_id = None
+        self.clip_bounds_ms = (None, None)
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
@@ -283,18 +284,15 @@ class BookmarkWindow(object):
 
 
     def clip_slider_click(self, event):
-        print('clickety-click down')
-        self.cancel_clip_slider_updates()
         self.clip_down_ms = self.clip_slider.get()
         self.clip_up_ms = None
-        print(f'  clip = {(self.clip_down_ms, self.clip_up_ms)}')
+        self.cancel_clip_slider_updates()
         self.clip_slider_update()
 
     def clip_slider_unclick(self, event):
-        print('clickety-click up')
-        self.cancel_clip_slider_updates()
         self.clip_up_ms = self.clip_slider.get()
-        print(f'  clip = {(self.clip_down_ms, self.clip_up_ms)}')
+        self.cancel_clip_slider_updates()
+        self.save_and_shade_clip()
 
     def cancel_clip_slider_updates(self):
         print(f'cancelling updates, current = {self.clip_after_id}')
@@ -305,14 +303,18 @@ class BookmarkWindow(object):
     def clip_slider_update(self):
         print(f'  UPDATE, clip = {(self.clip_down_ms, self.clip_up_ms)}')
         self.clip_up_ms = self.clip_slider.get()
-        self.clip_after_id = self.clip_slider.after(100, self.clip_slider_update)
+        self.save_and_shade_clip()
+        self.clip_after_id = self.clip_slider.after(500, self.clip_slider_update)
 
     def save_and_shade_clip(self):
         if (self.clip_down_ms is None or
             self.clip_up_ms is None or
             self.clip_up_ms < self.clip_down_ms):
             return
-        # TODO: re-plot with the shading.
+        self.clip_bounds_ms = (self.clip_down_ms, self.clip_up_ms)
+        print(f'clip bounds: {self.clip_bounds_ms}')
+        self.bookmark.clip_bounds_ms = self.clip_bounds_ms
+        self.plot()
 
     def play_pause(self):
         self.music_player.play_pause()
@@ -363,16 +365,15 @@ class BookmarkWindow(object):
         return signal
 
     def plot(self):
-
         fig = Figure(figsize = (5, 1))
         plot1 = fig.add_subplot(111)
 
-        # ref https://stackoverflow.com/questions/2176424/hiding-axis-text-in-matplotlib-plots
+        # ref https://stackoverflow.com/questions/2176424/
+        #   hiding-axis-text-in-matplotlib-plots
         for x in ['left', 'right', 'top', 'bottom']:
             plot1.spines[x].set_visible(False)
         plot1.axes.get_xaxis().set_visible(False)
         plot1.axes.get_yaxis().set_visible(False)
-
         plot1.plot(self.signal_plot_data)
 
         # To shade a time span, we have to translate the time into the
@@ -382,10 +383,11 @@ class BookmarkWindow(object):
             pct = (t_ms - self.from_val) / span
             return len(self.signal_plot_data) * pct
 
-        delta = (self.to_val - self.from_val) / 3
-        shade_start = signal_array_index(self.from_val + delta)
-        shade_end = signal_array_index(self.to_val - delta)
-        plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
+        cs, ce = self.bookmark.clip_bounds_ms
+        if (cs is not None and ce is not None):
+            shade_start = signal_array_index(cs)
+            shade_end = signal_array_index(ce)
+            plot1.axvspan(shade_start, shade_end, alpha=0.25, color='blue')
 
         canvas = FigureCanvasTkAgg(fig, master = self.slider_frame)
         canvas.draw()
@@ -403,6 +405,8 @@ class MainWindow:
         """A bookmark or clip item, stored in bookmarks listbox"""
         def __init__(self, pos_ms):
             self._pos_ms = pos_ms
+            self._clip_start_ms = None
+            self._clip_end_ms = None
 
         def display(self):
             """String description of this for display in list boxes."""
@@ -416,6 +420,14 @@ class MainWindow:
         @position_ms.setter
         def position_ms(self, v):
             self._pos_ms = v
+
+        @property
+        def clip_bounds_ms(self):
+            return (self._clip_start_ms, self._clip_end_ms)
+
+        @clip_bounds_ms.setter
+        def clip_bounds_ms(self, v):
+            self._clip_start_ms, self._clip_end_ms = v
 
         # TODO remove this.
         def placeholder(self):
