@@ -39,6 +39,7 @@ from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
 from pydub import AudioSegment
 from pygame import mixer
+from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
 
@@ -196,6 +197,13 @@ class BookmarkWindow(object):
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('500x300')
 
+        clip_frame = Frame(self.root)
+        self.slider_min_lbl = Label(clip_frame, text=TimeUtils.time_string(0))
+        self.slider_min_lbl.grid(row=1, column=1, pady=2)
+        self.slider_max_lbl = Label(clip_frame, text=TimeUtils.time_string(1000))
+        self.slider_max_lbl.grid(row=1, column=2, pady=2)
+        clip_frame.grid(row=0, column=0, pady=20)
+
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=1, column=0, pady=20)
 
@@ -240,21 +248,23 @@ class BookmarkWindow(object):
             to=self.to_val,
             orient=HORIZONTAL,
             length= sllen)
-        self.slider.grid(row=1, column=2, pady=10)
-
+        self.slider.grid(row=1, column=0, pady=10)
         self.slider_lbl = Label(slider_frame, text='')
-        self.slider_lbl.grid(row=2, column=2, pady=2)
-        self.slider_min_lbl = Label(slider_frame, text=TimeUtils.time_string(self.from_val))
-        self.slider_min_lbl.grid(row=2, column=1, pady=2)
-        self.slider_max_lbl = Label(slider_frame, text=TimeUtils.time_string(self.to_val))
-        self.slider_max_lbl.grid(row=2, column=3, pady=2)
+        self.slider_lbl.grid(row=2, column=0, pady=2)
+        self.plot(slider_frame, 3, 0)
+        self.clip_slider = Scale(
+            slider_frame,
+            from_=self.from_val,
+            to=self.to_val,
+            orient=HORIZONTAL,
+            length= sllen)
+        self.clip_slider.grid(row=4, column=0, pady=10)
 
         self.music_player = MusicPlayer(self.slider, self.slider_lbl, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(bookmark.position_ms)
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
-        self.plot(slider_frame)
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
@@ -290,16 +300,11 @@ class BookmarkWindow(object):
             print('using cached segment')
         return BookmarkWindow._full_audio_segment
             
-    # plot function is created for
-    # plotting the graph in
-    # tkinter window
-    def plot(self, frame):
 
-        print('loading audio segment from full file')
+    def plot(self, frame, row, column):
+
         sound = BookmarkWindow.getFullAudioSegment(self.music_file)
-        print('ok got full segment')
         sound = sound[self.from_val : self.to_val]
-        print('ok got partial segment')
         sound = sound.set_channels(1)
 
         # Hack for plotting: export to a .wav file.  I can't
@@ -308,7 +313,6 @@ class BookmarkWindow(object):
         # examples about plotting .wav files,
         # e.g. https://www.geeksforgeeks.org/plotting-various-sounds-on-graphs-using-python-and-matplotlib/
         signal = None
-        from tempfile import NamedTemporaryFile  # TODO move up
         print('about to load data')
         with NamedTemporaryFile("w+b", suffix=".wav") as f:
             sound.export(f.name, format='wav')
@@ -355,7 +359,7 @@ class BookmarkWindow(object):
         canvas.draw()
 
         # placing the canvas on the Tkinter window
-        canvas.get_tk_widget().grid(row=3, column=2, pady=20)
+        canvas.get_tk_widget().grid(row=row, column=column, pady=20)
 
         # Can't create Matplotlib toolbar, as it uses pack(), and we're already using grid().
         # toolbar = NavigationToolbar2Tk(canvas, self.root)
