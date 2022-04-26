@@ -280,7 +280,7 @@ class BookmarkWindow(object):
             e.insert(0, self.slider.get())
 
 
-        def _control_row(row, lbl_text, btn_text, btn_command, initial_value=None):
+        def _control_row(row, lbl_text, btn_text, initial_value=None):
             # Need both width and anchor for text alignment to work.
             lbl = Label(ctl_frame, text=lbl_text, width=10, anchor='e')
             lbl.grid(row=row, column=1, pady=2)
@@ -296,12 +296,16 @@ class BookmarkWindow(object):
 
             return (e, btn)
 
+        clip_start, clip_end = (None, None)
+        if bookmark.clip_bounds_ms:
+            clip_start, clip_end = bookmark.clip_bounds_ms
+
         self.entry, self.entry_btn = _control_row(
-            0, 'Bookmark', 'Update', None, bookmark.position_ms)
+            0, 'Bookmark', 'Update', bookmark.position_ms)
         self.b_start, self.start_btn = _control_row(
-            1, 'Clip start', 'Update start', None)
+            1, 'Clip start', 'Update start', clip_start)
         self.b_end, self.end_btn = _control_row(
-            2, 'Clip end', 'Update end', None)
+            2, 'Clip end', 'Update end', clip_end)
 
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
         self.play_btn.grid(row=3, column=2, padx=10)
