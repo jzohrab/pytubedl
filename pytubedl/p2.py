@@ -3,11 +3,10 @@
 #
 #
 # MVP TODO (usable for me)
-# - popup: add "play clip" button
-# - popup: re-styling of form: graph at top, slider under that, buttons under that
 # - popup: transcribe clip w/ vosk
 # - save transcription to bookmark object
 # - show start of transcription in bookmark description ?
+# - popup: re-styling of form: graph at top, slider under that, buttons under that
 # - add "bookmark" button to main screen
 # - restyle main screen:
 #   - slider at top, then slider buttons, then bookmark list, then bk buttons
@@ -39,7 +38,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
-from pydub import AudioSegment
+from pydub import AudioSegment, playback
 from pygame import mixer
 from tempfile import NamedTemporaryFile
 from tkinter import *
@@ -327,8 +326,10 @@ class BookmarkWindow(object):
 
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
         self.play_btn.grid(row=3, column=2, padx=10)
+        self.play_clip = Button(ctl_frame, text='Play clip', command=self.play_clip)
+        self.play_clip.grid(row=3, column=3, padx=10)
         self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
-        self.ok_btn.grid(row=3, column=3, padx=10)
+        self.ok_btn.grid(row=3, column=4, padx=10)
 
         ctl_frame.grid(row=1, column=0, pady=20)
 
@@ -374,6 +375,17 @@ class BookmarkWindow(object):
         self.root.wait_visibility()
         self.root.grab_set()
         self.root.transient(parent)
+
+    def play_clip(self):
+        cs = self.start_var.get()
+        ce = self.end_var.get()
+        if cs >= ce:
+            return
+
+        sound = BookmarkWindow.getFullAudioSegment(self.music_file)
+        sound = sound[cs : ce]
+        playback.play(sound)
+
 
     def play_pause(self):
         self.music_player.play_pause()
