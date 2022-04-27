@@ -3,9 +3,6 @@
 #
 #
 # MVP TODO (usable for me)
-# - popup: transcribe clip w/ vosk
-# - save transcription to bookmark object
-# - show start of transcription in bookmark description ?
 # - popup: re-styling of form: graph at top, slider under that, buttons under that
 # - add "bookmark" button to main screen
 # - restyle main screen:
@@ -330,6 +327,8 @@ class BookmarkWindow(object):
             2, 'Clip end', 'Update end', nz(clip_bounds[1], 0))
 
         self.transcription_var = StringVar()
+        if (self.bookmark.transcription):
+            self.transcription_var.set(self.bookmark.transcription)
         text_lbl = Label(ctl_frame, text='Text', width=10, anchor='e')
         text_lbl.grid(row=3, column=1, pady=2)
         text_entry = Entry(ctl_frame, width=50, textvariable = self.transcription_var)
@@ -501,6 +500,7 @@ class BookmarkWindow(object):
     def ok(self):
         self.root.grab_release()
         self.bookmark.position_ms = float(self.entry.get())
+        self.bookmark.transcription = self.transcription_var.get()
         self.set_clip_bounds()
         self.root.destroy()
 
@@ -651,6 +651,7 @@ class MainWindow:
             self._pos_ms = pos_ms
             self._clip_start_ms = None
             self._clip_end_ms = None
+            self.transcription = None
 
         def clipdisplay(self):
             s, e = (self._clip_start_ms, self._clip_end_ms)
@@ -658,7 +659,15 @@ class MainWindow:
                 return None
             s = TimeUtils.time_string(s)
             e = TimeUtils.time_string(e)
-            return f"Clip {s} - {e}"
+            ret = f"{s} - {e}"
+
+            t = self.transcription
+            if t is not None and t != '':
+                clipped = t[:50]
+                if clipped != t:
+                    clipped += ' ...'
+                ret = f"{ret}  \"{clipped}\""
+            return ret
 
         def display(self):
             """String description of this for display in list boxes."""
@@ -685,11 +694,6 @@ class MainWindow:
         @clip_bounds_ms.setter
         def clip_bounds_ms(self, v):
             self._clip_start_ms, self._clip_end_ms = v
-
-        # TODO remove this.
-        def placeholder(self):
-            """Demo method, what to do when selected."""
-            return f"PLACEHOLDER for {self.display()}"
 
 
     class FullTrackBookmark(Bookmark):
@@ -724,7 +728,7 @@ class MainWindow:
         self.bookmarks = []
         self.bookmarks_lst = Listbox(
             bk_frame,
-            width=30,
+            width=50,
             selectbackground="yellow",
             selectforeground="black")
         self.bookmarks_lst.grid(row=0, column=1)
