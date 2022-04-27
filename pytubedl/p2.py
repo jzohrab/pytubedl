@@ -413,7 +413,13 @@ class BookmarkWindow(object):
             self._bytesread = 0
             self._pct = 0
             self._last_pct = 0
-            self.latest_result = None
+
+            self.current_partial_result = None
+
+            # Vosk returns 'partial results' as it processes, but then
+            # each individual sentence (as best as Vosk can determine)
+            # is returned as a 'result', or a 'final result'.
+            self.sentences = []
             self.entry_var = entry_var
 
         def totalbytes(self, t):
@@ -428,28 +434,33 @@ class BookmarkWindow(object):
                 self.alert_update()
                 self._last_pct = self._pct
 
+        def transcription(self):
+            tmp = self.sentences.copy()
+            if self.current_partial_result:
+                tmp.append(self.current_partial_result)
+            return '. '.join(self.sentences)
+
         def alert_update(self):
             print()
-            print(f'{self._pct}%: {self.latest_result}')
-            self.entry_var.set(self.latest_result)
+            print(f'{self._pct}%: {self.transcription()}')
+            self.entry_var.set(self.transcription())
+            update() # Update the UI, since this is blocking the main thread.
 
         def partial_result(self, r):
-            # print(r)
             t = json.loads(r)
-            self.latest_result = t.get('partial')
+            self.current_partial_result = t.get('partial')
 
         def result(self, r):
-            # print(r)
             t = json.loads(r)
-            self.latest_result = t.get('partial')
+            self.sentences.append(t.get('text'))
+            self.current_partial_result = None
 
         def final_result(self, r):
-            # print(r)
-            t = json.loads(r)
-            self.latest_result = t.get('text')
+            self.result(r)
             self.alert_update()
             print()
             print('done')
+
 
     def transcribe(self):
         c = self.get_clip()
