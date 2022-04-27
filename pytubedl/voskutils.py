@@ -6,11 +6,6 @@ import sys
 from vosk import Model, KaldiRecognizer, SetLogLevel
 import wave
 
-# Precondition for vosk.
-if not os.path.exists("model"):
-    print ("Please download the model from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder.")
-    exit (1)
-
 SetLogLevel(-1)
 
 
@@ -28,6 +23,11 @@ def transcribe_wav(f, callback):
     """Transcrabe a .wav file, calling back to provide updates.
     ref https://github.com/alphacep/vosk-api/blob/master/python/example/test_simple.py
     """
+
+    # Precondition for vosk.
+    if not os.path.exists("model_"):
+        msg = "Missing vosk model directory, download from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder."
+        raise RuntimeError(msg)
 
     wf = wave.open(f, "rb")
     # print(f"channels: {wf.getnchannels()}")
