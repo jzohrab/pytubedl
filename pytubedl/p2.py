@@ -263,6 +263,7 @@ class BookmarkWindow(object):
         self.music_file = music_file
         self.song_length_ms = song_length_ms
 
+        self.parent = parent
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('500x400')
@@ -407,7 +408,7 @@ class BookmarkWindow(object):
 
     class StringVarCallback(TranscriptionCallback):
 
-        def __init__(self, entry_var):
+        def __init__(self, rootwindow, entry_var):
             super()
             self._totalbytes = 100
             self._bytesread = 0
@@ -422,6 +423,10 @@ class BookmarkWindow(object):
             self.sentences = []
             self.entry_var = entry_var
 
+            # Handle to main window to force updates.
+            # Hacky, really this should be moved to a thread or subprocess.
+            self.rootwindow = rootwindow
+
         def totalbytes(self, t):
             print(f'About to read {t}')
             self._totalbytes = t
@@ -430,7 +435,7 @@ class BookmarkWindow(object):
             self._bytesread += b
             print('.', end='', flush=True)
             self._pct = int((self._bytesread / self._totalbytes) * 100)
-            if self._pct - self._last_pct > 10:
+            if self._pct - self._last_pct >= 10:
                 self.alert_update()
                 self._last_pct = self._pct
 
@@ -444,7 +449,7 @@ class BookmarkWindow(object):
             print()
             print(f'{self._pct}%: {self.transcription()}')
             self.entry_var.set(self.transcription())
-            update() # Update the UI, since this is blocking the main thread.
+            self.rootwindow.update() # Update the UI, since this is blocking the main thread.
 
         def partial_result(self, r):
             t = json.loads(r)
@@ -466,7 +471,7 @@ class BookmarkWindow(object):
         c = self.get_clip()
         if c is None:
             return
-        cb = BookmarkWindow.StringVarCallback(self.transcription_var)
+        cb = BookmarkWindow.StringVarCallback(self.parent, self.transcription_var)
         transcribe_audiosegment(c, cb)
 
     def play_pause(self):
