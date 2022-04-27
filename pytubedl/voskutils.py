@@ -68,13 +68,11 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
     # In this case, pydub actually dumps content to a temp .wav file, and
     # then plays with that.
     # Since that's how we're playing it, just use that for vosk as well.
-    ret = ''
     chunk = chunk.set_channels(1)
     from tempfile import NamedTemporaryFile
     with NamedTemporaryFile("w+b", suffix=".wav") as f:
         chunk.export(f.name, format='wav')
-        ret = transcribe_wav(f.name, cb)
-    return ret
+        transcribe_wav(f.name, cb)
 
 
 #############################
@@ -124,8 +122,7 @@ def main():
             # print(r)
             t = json.loads(r)
             self.latest_result = t.get('text')
-            print()
-            print('done')
+            self.alert_update()
 
     f = "downloads/test_split.mp3"
     print("loading song")
@@ -134,9 +131,9 @@ def main():
     duration = 5 * 1000  # ms
     chunk = song[:duration]
     c = ConsoleCallback()
-    s = transcribe_audiosegment(chunk, c)
+    transcribe_audiosegment(chunk, c)
     print(c.latest_result)
-
+    print('done')
 
 if __name__ == "__main__":
    main()
