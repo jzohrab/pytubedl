@@ -53,7 +53,7 @@ class TimeUtils:
         total_seconds = ms / 1000.0
         mins = int(total_seconds) // 60
         secs = total_seconds % 60
-        return '{:02d}m{:04.1f}s'.format(mins, secs)
+        return '{:02d}:{:04.1f}'.format(mins, secs)
 
 
 class MusicPlayer:
@@ -283,7 +283,7 @@ class BookmarkWindow(object):
             e = Entry(ctl_frame, width=10, textvariable=var)
             e.grid(row=row, column=2, padx=10)
 
-            time_lbl = Label(ctl_frame, text='', width=10, anchor='e')
+            time_lbl = Label(ctl_frame, text='', width=10, anchor='w')
             time_lbl.grid(row=row, column=3, pady=2)
             def update_time_label(a, b, c):
                 s = TimeUtils.time_string(var.get())
