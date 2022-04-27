@@ -11,13 +11,6 @@ if not os.path.exists("model"):
     print ("Please download the model from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder.")
     exit (1)
 
-
-######################
-# Vosk transcribe a wav file.
-# ref:
-# https://github.com/alphacep/vosk-api/blob/master/python/example/test_simple.py
-
-
 SetLogLevel(-1)
 
 
@@ -32,6 +25,10 @@ class TranscriptionCallback(object):
     
 
 def transcribe_wav(f, callback):
+    """Transcrabe a .wav file, calling back to provide updates.
+    ref https://github.com/alphacep/vosk-api/blob/master/python/example/test_simple.py
+    """
+
     wf = wave.open(f, "rb")
     # print(f"channels: {wf.getnchannels()}")
     # print(f"width: {wf.getsampwidth()}")
@@ -65,7 +62,6 @@ def transcribe_wav(f, callback):
     callback.final_result(rec.FinalResult())
 
 
-
 def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
     # Per https://github.com/jiaaro/pydub/blob/master/pydub/playback.py,
     # playback falls back to ffplay, so we'll assume that's what's being used.
@@ -81,8 +77,8 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
     return ret
 
 
-######################
-# Main
+#############################
+# Sample usage with callback.
 
 def main():
 
