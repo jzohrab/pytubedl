@@ -3,14 +3,18 @@
 #
 #
 # MVP TODO (usable for me)
-# - popup: re-styling of form: graph at top, slider under that, buttons under that
+# - export card and transcription to anki, hardcoded destination
 # - add "bookmark" button to main screen
+#
+# - "anki config" for exporting.
+# - popup: re-styling of form: graph at top, slider under that, buttons under that
 # - restyle main screen:
 #   - slider at top, then slider buttons, then bookmark list, then bk buttons
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
 # - export clipped mp3 file to disk
-# - export card and transcription to anki, hardcoded destination
+# - better error handling for failed transcription model
+# - list hotkeys in README
 # - any other TODOs in the code.
 
 # Future TODOs:
@@ -340,9 +344,10 @@ class BookmarkWindow(object):
         self.play_clip.grid(row=5, column=2, padx=10)
         self.transcribe_btn = Button(ctl_frame, text="Transcribe", command=self.transcribe)
         self.transcribe_btn.grid(row=6, column=2, padx=10)
-
+        self.export_btn = Button(ctl_frame, text="Export", command=self.export)
+        self.export_btn.grid(row=6, column=2, padx=10)
         self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
-        self.ok_btn.grid(row=7, column=2, padx=10)
+        self.ok_btn.grid(row=8, column=2, padx=10)
 
         ctl_frame.grid(row=1, column=0, pady=20)
 
@@ -473,6 +478,16 @@ class BookmarkWindow(object):
         cb = BookmarkWindow.StringVarCallback(self.parent, self.transcription_var)
         transcribe_audiosegment(c, cb)
 
+
+    def export(self):
+        """Export the current clip and transcription to Anki."""
+        print('export')
+        c = self.get_clip()
+        if c is None:
+            print('no clip')
+            return
+
+        
     def play_pause(self):
         self.music_player.play_pause()
 
