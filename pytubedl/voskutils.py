@@ -1,12 +1,10 @@
-# open the full file
-# audio of first 10 seconds
-# vosk it
-
 from pydub import AudioSegment
 from pydub import playback
 from pydub.silence import split_on_silence
 import os
 import sys
+from vosk import Model, KaldiRecognizer, SetLogLevel
+import wave
 
 # Precondition for vosk.
 if not os.path.exists("model"):
@@ -19,15 +17,21 @@ if not os.path.exists("model"):
 # ref:
 # https://github.com/alphacep/vosk-api/blob/master/python/example/test_simple.py
 
-from vosk import Model, KaldiRecognizer, SetLogLevel
-import sys
-import os
-import wave
-import json
 
 SetLogLevel(-1)
 
-def transcribe_wav(f):
+
+class TranscriptionCallback(object):
+    """Callbacks to report on transcription status."""
+    def __init__(self): pass
+    def totalbytes(self, t): pass
+    def bytesread(self, b): pass
+    def partial_result(self, r): pass
+    def result(self, r): pass
+    def final_result(self, r): pass
+    
+
+def transcribe_wav(f, callback):
     wf = wave.open(f, "rb")
     # print(f"channels: {wf.getnchannels()}")
     # print(f"width: {wf.getsampwidth()}")
@@ -42,24 +46,32 @@ def transcribe_wav(f):
     rec.SetWords(True)
     # rec.SetPartialWords(True)
 
-    while True:
+    totalbytes = wf.getnframes() * wf.getsampwidth()
+    callback.totalbytes(totalbytes)
+
+    bytesread = 0
+    end_of_stream = False
+    while not end_of_stream:
         data = wf.readframes(4000)
-        print('.', end='', flush=True)
+
+        # Per the docs (https://docs.python.org/3/library/wave.html),
+        # readframes "reads and returns at most n frames of audio".
+        bytesread += len(data)
+        callback.bytesread(bytesread)
+
         if len(data) == 0:
-            break
-        rec.AcceptWaveform(data)
-        # if rec.AcceptWaveform(data):
-        #     print(rec.Result())
-        # else:
-        #     print(rec.PartialResult())
+            end_of_stream = True
+        if rec.AcceptWaveform(data):
+            callback.result(rec.Result())
+        else:
+            callback.partial_result(rec.PartialResult())
     wf.close()
 
-    print()
-    result = json.loads(rec.FinalResult())
-    return result.get('text')
+    callback.final_result(rec.FinalResult())
 
 
-def transcribe_audiosegment(chunk):
+
+def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
     # Per https://github.com/jiaaro/pydub/blob/master/pydub/playback.py,
     # playback falls back to ffplay, so we'll assume that's what's being used.
     # In this case, pydub actually dumps content to a temp .wav file, and
@@ -70,7 +82,7 @@ def transcribe_audiosegment(chunk):
     from tempfile import NamedTemporaryFile
     with NamedTemporaryFile("w+b", suffix=".wav") as f:
         chunk.export(f.name, format='wav')
-        ret = transcribe_wav(f.name)
+        ret = transcribe_wav(f.name, cb)
     return ret
 
 
@@ -78,14 +90,61 @@ def transcribe_audiosegment(chunk):
 # Main
 
 def main():
+
+    import json
+
+    class ConsoleCallback(TranscriptionCallback):
+
+        def __init__(self):
+            super()
+            self._totalbytes = 100
+            self._bytesread = 0
+            self._pct = 0
+            self._last_pct = 0
+            self.latest_result = None
+
+        def totalbytes(self, t):
+            print(f'About to read {t}')
+            self._totalbytes = t
+
+        def bytesread(self, b):
+            print('.', end='', flush=True)
+            self._bytesread = b
+            self._pct = int((self._bytesread / self._totalbytes) * 100)
+            if self._pct - self._last_pct > 10:
+                self.alert_update()
+                self._last_pct = self._pct
+
+        def alert_update(self):
+            print()
+            print(f'{self._pct}%: {self.latest_result}')
+
+        def partial_result(self, r):
+            # print(r)
+            t = json.loads(r)
+            self.latest_result = t.get('partial')
+
+        def result(self, r):
+            # print(r)
+            t = json.loads(r)
+            self.latest_result = t.get('partial')
+
+        def final_result(self, r):
+            # print(r)
+            t = json.loads(r)
+            self.latest_result = t.get('text')
+            print()
+            print('done')
+
     f = "downloads/test_split.mp3"
     print("loading song")
     song = AudioSegment.from_mp3(f)
     print("making chunk")
     duration = 5 * 1000  # ms
     chunk = song[:duration]
-    s = transcribe_audiosegment(chunk)
-    print(s)
+    c = ConsoleCallback()
+    s = transcribe_audiosegment(chunk, c)
+    print(c.latest_result)
 
 
 if __name__ == "__main__":
