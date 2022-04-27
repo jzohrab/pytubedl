@@ -17,6 +17,7 @@
 # - any other TODOs in the code.
 
 # Future TODOs:
+# - hotkey help - https://mail.python.org/pipermail/python-list/2003-April/229647.html
 # - configurable anki save destination
 # - "save" and "import" to load all bookmarks and stuff
 # - maybe "add note" to bookmark?
