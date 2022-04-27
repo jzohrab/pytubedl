@@ -4,7 +4,6 @@
 #
 # MVP TODO (usable for me)
 # - popup: add "play clip" button
-# - popup: change slider label (somehow?) to show time 00m00.0s
 # - popup: re-styling of form: graph at top, slider under that, buttons under that
 # - popup: transcribe clip w/ vosk
 # - save transcription to bookmark object
@@ -273,26 +272,32 @@ class BookmarkWindow(object):
         # clip_frame.grid(row=0, column=0, pady=20)
 
         ctl_frame = Frame(self.root)
-        def update_entry(e):
-            e.delete(0,END)
-            e.insert(0, self.slider.get())
-
 
         def _control_row(row, lbl_text, btn_text, initial_value=None):
             # Need both width and anchor for text alignment to work.
             lbl = Label(ctl_frame, text=lbl_text, width=10, anchor='e')
             lbl.grid(row=row, column=1, pady=2)
 
-            e = Entry(ctl_frame)
-            if initial_value:
-                e.insert(END, initial_value)
+            var = DoubleVar()
+
+            e = Entry(ctl_frame, width=10, textvariable=var)
             e.grid(row=row, column=2, padx=10)
 
-            lam = lambda: update_entry(e)
-            btn = Button(ctl_frame, text=btn_text, width=10, command=lam)
-            btn.grid(row=row, column=3, padx=10)
+            time_lbl = Label(ctl_frame, text='', width=10, anchor='e')
+            time_lbl.grid(row=row, column=3, pady=2)
+            def update_time_label(a, b, c):
+                s = TimeUtils.time_string(var.get())
+                time_lbl.configure(text=f'({s})')
 
-            return (e, btn)
+            var.trace('w', update_time_label)
+            if initial_value:
+                var.set(initial_value)
+
+            lam = lambda: var.set(float(self.slider.get()))
+            btn = Button(ctl_frame, text=btn_text, width=10, command=lam)
+            btn.grid(row=row, column=4, padx=10)
+
+            return (e, var, btn)
 
         def nz(a, b): return b if a is None else a
 
@@ -313,12 +318,12 @@ class BookmarkWindow(object):
         self.from_val = int(max(0, sl_min))
         self.to_val = int(min(self.song_length_ms, sl_max))
 
-        self.entry, self.entry_btn = _control_row(
+        self.entry, self.entry_var, self.entry_btn = _control_row(
             0, 'Bookmark', 'Update', bookmark.position_ms)
-        self.b_start, self.start_btn = _control_row(
-            1, 'Clip start', 'Update start', clip_bounds[0])
-        self.b_end, self.end_btn = _control_row(
-            2, 'Clip end', 'Update end', clip_bounds[1])
+        self.b_start, self.start_var, self.start_btn = _control_row(
+            1, 'Clip start', 'Update start', nz(clip_bounds[0], 0))
+        self.b_end, self.end_var, self.end_btn = _control_row(
+            2, 'Clip end', 'Update end', nz(clip_bounds[1], 0))
 
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
         self.play_btn.grid(row=3, column=2, padx=10)
