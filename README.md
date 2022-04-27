@@ -1,3 +1,12 @@
+# Clip maker
+
+TODO update this.  include:
+
+* vosk model
+* config.ini
+* install and running
+
+
 # Python backchainer
 
 Utils to break up an audio file, and use backchaining to work on sentence pronunciation.

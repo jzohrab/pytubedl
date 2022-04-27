@@ -48,7 +48,7 @@ from tkinter import filedialog
 
 from voskutils import transcribe_audiosegment, TranscriptionCallback
 import json
-
+import configparser
 
 class TimeUtils:
 
@@ -345,7 +345,7 @@ class BookmarkWindow(object):
         self.transcribe_btn = Button(ctl_frame, text="Transcribe", command=self.transcribe)
         self.transcribe_btn.grid(row=6, column=2, padx=10)
         self.export_btn = Button(ctl_frame, text="Export", command=self.export)
-        self.export_btn.grid(row=6, column=2, padx=10)
+        self.export_btn.grid(row=7, column=2, padx=10)
         self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
         self.ok_btn.grid(row=8, column=2, padx=10)
 
@@ -486,8 +486,11 @@ class BookmarkWindow(object):
         if c is None:
             print('no clip')
             return
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        # print(config)
+        config.write(sys.stdout)
 
-        
     def play_pause(self):
         self.music_player.play_pause()
 
