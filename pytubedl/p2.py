@@ -480,16 +480,48 @@ class BookmarkWindow(object):
 
 
     def export(self):
-        """Export the current clip and transcription to Anki."""
+        """Export the current clip and transcription to Anki using Ankiconnect."""
         print('export')
         c = self.get_clip()
         if c is None:
             print('no clip')
             return
+
+        # file name, needs to be unique.  copied to media folder.
+        export_file = 'somefile.mp3'
+
         config = configparser.ConfigParser()
         config.read('config.ini')
         # print(config)
         config.write(sys.stdout)
+
+        a = config['AnkiCard']
+
+        fields = {
+            a['AudioField']: f'[sound:{export_file}]'
+        }
+
+        t = self.transcription_var.get()
+        if t is not None and t != '':
+            fields[ a['TranscriptionField'] ] = t
+
+        postjson = {
+            "action": "addNote",
+            "version": 6,
+            "params": {
+                "note": {
+                    "deckName": a['Deck'],
+                    "modelName": a['ModelName'],
+                    "fields": fields
+                }
+            }
+        }
+
+        print(postjson)
+        print('posting')
+        # r = requests.post('http://127.0.0.1:8765', json = postjson)
+        # print('posted')
+        # print(r)
 
     def play_pause(self):
         self.music_player.play_pause()

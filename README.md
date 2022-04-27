@@ -5,7 +5,7 @@ TODO update this.  include:
 * vosk model
 * config.ini
 * install and running
-
+* ankiconnect
 
 # Python backchainer
 
