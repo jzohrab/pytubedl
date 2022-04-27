@@ -25,7 +25,7 @@ def transcribe_wav(f, callback):
     """
 
     # Precondition for vosk.
-    if not os.path.exists("model_"):
+    if not os.path.exists("model"):
         msg = "Missing vosk model directory, download from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder."
         raise RuntimeError(msg)
 
