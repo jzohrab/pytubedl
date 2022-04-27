@@ -49,15 +49,10 @@ def transcribe_wav(f, callback):
     totalbytes = wf.getnframes() * wf.getsampwidth()
     callback.totalbytes(totalbytes)
 
-    bytesread = 0
     end_of_stream = False
     while not end_of_stream:
         data = wf.readframes(4000)
-
-        # Per the docs (https://docs.python.org/3/library/wave.html),
-        # readframes "reads and returns at most n frames of audio".
-        bytesread += len(data)
-        callback.bytesread(bytesread)
+        callback.bytesread(len(data))
 
         if len(data) == 0:
             end_of_stream = True
@@ -108,8 +103,8 @@ def main():
             self._totalbytes = t
 
         def bytesread(self, b):
+            self._bytesread += b
             print('.', end='', flush=True)
-            self._bytesread = b
             self._pct = int((self._bytesread / self._totalbytes) * 100)
             if self._pct - self._last_pct > 10:
                 self.alert_update()
