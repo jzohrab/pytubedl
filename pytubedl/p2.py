@@ -45,6 +45,9 @@ from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
 
+from voskutils import transcribe_audiosegment, TranscriptionCallback
+import json
+
 
 class TimeUtils:
 
@@ -325,12 +328,21 @@ class BookmarkWindow(object):
         self.b_end, self.end_var, self.end_btn = _control_row(
             2, 'Clip end', 'Update end', nz(clip_bounds[1], 0))
 
+        self.transcription_var = StringVar()
+        text_lbl = Label(ctl_frame, text='Text', width=10, anchor='e')
+        text_lbl.grid(row=3, column=1, pady=2)
+        text_entry = Entry(ctl_frame, width=50, textvariable = self.transcription_var)
+        text_entry.grid(row=3, column=2, columnspan=3, padx=10, sticky=W+E)
+
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
-        self.play_btn.grid(row=3, column=2, padx=10)
+        self.play_btn.grid(row=4, column=2, padx=10)
         self.play_clip = Button(ctl_frame, text='Play clip', command=self.play_clip)
-        self.play_clip.grid(row=3, column=3, padx=10)
+        self.play_clip.grid(row=5, column=2, padx=10)
+        self.transcribe_btn = Button(ctl_frame, text="Transcribe", command=self.transcribe)
+        self.transcribe_btn.grid(row=6, column=2, padx=10)
+
         self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
-        self.ok_btn.grid(row=3, column=4, padx=10)
+        self.ok_btn.grid(row=7, column=2, padx=10)
 
         ctl_frame.grid(row=1, column=0, pady=20)
 
@@ -377,16 +389,74 @@ class BookmarkWindow(object):
         self.root.grab_set()
         self.root.transient(parent)
 
-    def play_clip(self):
+    def get_clip(self):
         cs = self.start_var.get()
         ce = self.end_var.get()
         if cs >= ce:
-            return
+            return None
 
         sound = BookmarkWindow.getFullAudioSegment(self.music_file)
-        sound = sound[cs : ce]
-        playback.play(sound)
+        return sound[cs : ce]
+        
+    def play_clip(self):
+        c = self.get_clip()
+        if c is None:
+            return
+        playback.play(c)
 
+
+    class StringVarCallback(TranscriptionCallback):
+
+        def __init__(self, entry_var):
+            super()
+            self._totalbytes = 100
+            self._bytesread = 0
+            self._pct = 0
+            self._last_pct = 0
+            self.latest_result = None
+            self.entry_var = entry_var
+
+        def totalbytes(self, t):
+            print(f'About to read {t}')
+            self._totalbytes = t
+
+        def bytesread(self, b):
+            self._bytesread += b
+            print('.', end='', flush=True)
+            self._pct = int((self._bytesread / self._totalbytes) * 100)
+            if self._pct - self._last_pct > 10:
+                self.alert_update()
+                self._last_pct = self._pct
+
+        def alert_update(self):
+            print()
+            print(f'{self._pct}%: {self.latest_result}')
+            self.entry_var.set(self.latest_result)
+
+        def partial_result(self, r):
+            # print(r)
+            t = json.loads(r)
+            self.latest_result = t.get('partial')
+
+        def result(self, r):
+            # print(r)
+            t = json.loads(r)
+            self.latest_result = t.get('partial')
+
+        def final_result(self, r):
+            # print(r)
+            t = json.loads(r)
+            self.latest_result = t.get('text')
+            self.alert_update()
+            print()
+            print('done')
+
+    def transcribe(self):
+        c = self.get_clip()
+        if c is None:
+            return
+        cb = BookmarkWindow.StringVarCallback(self.transcription_var)
+        transcribe_audiosegment(c, cb)
 
     def play_pause(self):
         self.music_player.play_pause()
