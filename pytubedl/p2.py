@@ -283,7 +283,7 @@ class BookmarkWindow(object):
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=2, column=0, pady=20)
 
-        def _control_row(row, lbl_text, btn_text, initial_value=None):
+        def _clip_btn(row, lbl_text, btn_text, initial_value=None):
             var = DoubleVar()
 
             # Need both width and anchor for text alignment to work.
@@ -305,14 +305,11 @@ class BookmarkWindow(object):
             )
             btn.grid(row=row, column=3, padx=10)
 
-            return (var, btn)
+            return var
 
-        self.entry_var, self.entry_btn = _control_row(
-            0, 'Bookmark', 'Update', bookmark.position_ms)
-        self.start_var, self.start_btn = _control_row(
-            1, 'Clip start', 'Update start', clip_bounds[0])
-        self.end_var, self.end_btn = _control_row(
-            2, 'Clip end', 'Update end', clip_bounds[1])
+        self.entry_var = _clip_btn(0, 'Bookmark', 'Update', bookmark.position_ms)
+        self.start_var = _clip_btn(1, 'Clip start', 'Update start', clip_bounds[0])
+        self.end_var = _clip_btn(2, 'Clip end', 'Update end', clip_bounds[1])
 
         self.transcription_var = StringVar()
         if (self.bookmark.transcription):
