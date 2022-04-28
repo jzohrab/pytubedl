@@ -244,12 +244,12 @@ class BookmarkWindow(object):
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
         self.root.geometry('500x400')
 
-        # clip_frame = Frame(self.root)
-        # self.slider_min_lbl = Label(clip_frame, text=TimeUtils.time_string(0))
-        # self.slider_min_lbl.grid(row=1, column=1, pady=2)
-        # self.slider_max_lbl = Label(clip_frame, text=TimeUtils.time_string(1000))
-        # self.slider_max_lbl.grid(row=1, column=2, pady=2)
-        # clip_frame.grid(row=0, column=0, pady=20)
+        self.from_val, self.to_val = self.get_slider_from_to(bookmark)
+
+        # Start the clip at the bookmark value for now, good enough.
+        clip_bounds = bookmark.clip_bounds_ms
+        if not bookmark.clip_bounds_ms:
+            clip_bounds = (bookmark.position_ms, bookmark.position_ms)
 
         ctl_frame = Frame(self.root)
 
@@ -278,13 +278,6 @@ class BookmarkWindow(object):
             btn.grid(row=row, column=4, padx=10)
 
             return (var, btn)
-
-        # Start the clip at the bookmark value for now, good enough.
-        clip_bounds = bookmark.clip_bounds_ms
-        if not bookmark.clip_bounds_ms:
-            clip_bounds = (bookmark.position_ms, bookmark.position_ms)
-
-        self.from_val, self.to_val = self.get_slider_from_to(bookmark)
 
         self.entry_var, self.entry_btn = _control_row(
             0, 'Bookmark', 'Update', bookmark.position_ms)
