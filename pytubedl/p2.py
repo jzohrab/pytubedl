@@ -33,7 +33,10 @@
 import numpy as np
 import tkinter.ttk as ttk
 import wave
+import os
 
+from datetime import datetime
+import shutil
 from enum import Enum
 from matplotlib import pyplot
 import matplotlib.pyplot as plt
@@ -487,18 +490,30 @@ class BookmarkWindow(object):
             print('no clip')
             return
 
-        # file name, needs to be unique.  copied to media folder.
-        export_file = 'somefile.mp3'
-
         config = configparser.ConfigParser()
         config.read('config.ini')
         # print(config)
         config.write(sys.stdout)
 
+        destdir = config['Anki']['MediaFolder']
+
+        now = datetime.now() # current date and time
+        date_time = now.strftime("%Y%m%d_%H%M%S")
+        filename = f'clip_{date_time}_{id(c)}.mp3'
+        destname = os.path.join(destdir, filename)
+
+        with NamedTemporaryFile(suffix='.mp3') as temp:
+            c.export(temp.name, format="mp3")
+            shutil.copyfile(temp.name, destname)
+            print('Generated temp clip:')
+            print(temp.name)
+            print('Copied clip to:')
+            print(destname)
+
         a = config['AnkiCard']
 
         fields = {
-            a['AudioField']: f'[sound:{export_file}]'
+            a['AudioField']: f'[sound:{filename}]'
         }
 
         t = self.transcription_var.get()

@@ -5,6 +5,7 @@ import os
 import sys
 from vosk import Model, KaldiRecognizer, SetLogLevel
 import wave
+from tempfile import NamedTemporaryFile
 
 SetLogLevel(-1)
 
@@ -69,7 +70,6 @@ def transcribe_audiosegment(chunk, cb = TranscriptionCallback()):
     # then plays with that.
     # Since that's how we're playing it, just use that for vosk as well.
     chunk = chunk.set_channels(1)
-    from tempfile import NamedTemporaryFile
     with NamedTemporaryFile("w+b", suffix=".wav") as f:
         chunk.export(f.name, format='wav')
         transcribe_wav(f.name, cb)
