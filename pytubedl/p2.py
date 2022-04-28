@@ -319,8 +319,12 @@ class BookmarkWindow(object):
         text_entry = Entry(ctl_frame, width=50, textvariable = self.transcription_var)
         text_entry.grid(row=3, column=2, columnspan=3, padx=10, sticky=W+E)
 
+        # The play button is special, b/c we need to keep a handle on
+        # it, but all the other buttons are just "data" so we can
+        # create them in an array.
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
         self.play_btn.grid(row=4, column=2, padx=10)
+
         self.play_clip = Button(ctl_frame, text='Play clip', command=self.play_clip)
         self.play_clip.grid(row=5, column=2, padx=10)
         self.transcribe_btn = Button(ctl_frame, text="Transcribe", command=self.transcribe)
