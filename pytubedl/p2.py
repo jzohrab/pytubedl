@@ -279,31 +279,19 @@ class BookmarkWindow(object):
 
             return (var, btn)
 
-        def nz(a, b): return b if a is None else a
+        # Start the clip at the bookmark value for now, good enough.
+        clip_bounds = bookmark.clip_bounds_ms
+        if not bookmark.clip_bounds_ms:
+            clip_bounds = (bookmark.position_ms, bookmark.position_ms)
 
-        clip_bounds = nz(bookmark.clip_bounds_ms, (None, None))
-        sl_start = nz(clip_bounds[0], bookmark.position_ms)
-
-        m = bookmark.position_ms
-        sl_min, sl_max = nz(bookmark.clip_bounds_ms, (m, m))
-        padding = 5000
-        sl_max += padding
-        if clip_bounds[0] is not None:
-            sl_min -= padding
-        else:
-            # For bookmarks (clip not defined yet), assume that the user
-            # clicked "bookmark" *after* hearing something interesting --
-            # so pad a bit more before than after.
-            sl_min -= 3 * padding
-        self.from_val = int(max(0, sl_min))
-        self.to_val = int(min(self.song_length_ms, sl_max))
+        self.from_val, self.to_val = self.get_slider_from_to(bookmark)
 
         self.entry_var, self.entry_btn = _control_row(
             0, 'Bookmark', 'Update', bookmark.position_ms)
         self.start_var, self.start_btn = _control_row(
-            1, 'Clip start', 'Update start', nz(clip_bounds[0], 0))
+            1, 'Clip start', 'Update start', clip_bounds[0])
         self.end_var, self.end_btn = _control_row(
-            2, 'Clip end', 'Update end', nz(clip_bounds[1], 0))
+            2, 'Clip end', 'Update end', clip_bounds[1])
 
         self.transcription_var = StringVar()
         if (self.bookmark.transcription):
@@ -360,7 +348,7 @@ class BookmarkWindow(object):
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
-        self.music_player.reposition(sl_start)
+        self.music_player.reposition(clip_bounds[0])
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
         # Modal window.
@@ -368,6 +356,26 @@ class BookmarkWindow(object):
         self.root.wait_visibility()
         self.root.grab_set()
         self.root.transient(parent)
+
+    def get_slider_from_to(self, bk):
+        sl_min = sl_max = None
+        padding = 5000
+
+        if bk.clip_bounds_ms:
+            sl_min = bk.clip_bounds_ms[0] - padding
+            sl_max = bk.clip_bounds_ms[1] + padding
+        else:
+            # If the clip is not defined yet, assume that the user
+            # clicked "bookmark" *after* hearing something interesting
+            # and pad a bit more before than after.
+            sl_min = bk.position_ms - 3 * padding
+            sl_max = bk.position_ms + padding
+
+        # Respect bounds.
+        sl_min = int(max(0, sl_min))
+        sl_max = int(min(self.song_length_ms, sl_max))
+
+        return (sl_min, sl_max)
 
     def get_clip(self):
         cs = self.start_var.get()

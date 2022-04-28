@@ -13,7 +13,10 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
-# - popup: re-styling of form: graph at top, slider under that, buttons under that
+# - popup: re-styling of form:
+    - graph at top
+    - slider under that
+    - buttons under that
 # - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
 # - popup hotkeys
 # - restyle main screen:
