@@ -45,6 +45,7 @@ from matplotlib.figure import Figure
 from mutagen.mp3 import MP3
 from pydub import AudioSegment, playback
 from pygame import mixer
+import requests
 from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
@@ -505,10 +506,10 @@ class BookmarkWindow(object):
         with NamedTemporaryFile(suffix='.mp3') as temp:
             c.export(temp.name, format="mp3")
             shutil.copyfile(temp.name, destname)
-            print('Generated temp clip:')
-            print(temp.name)
-            print('Copied clip to:')
-            print(destname)
+            # print('Generated temp clip:')
+            # print(temp.name)
+            # print('Copied clip to:')
+            # print(destname)
 
         a = config['AnkiCard']
 
@@ -534,9 +535,10 @@ class BookmarkWindow(object):
 
         print(postjson)
         print('posting')
-        # r = requests.post('http://127.0.0.1:8765', json = postjson)
-        # print('posted')
-        # print(r)
+        url = config['Anki']['Ankiconnect']
+        r = requests.post(url, json = postjson)
+        print('posted')
+        print(r.json())
 
     def play_pause(self):
         self.music_player.play_pause()
