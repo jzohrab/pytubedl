@@ -327,7 +327,7 @@ class BookmarkWindow(object):
             col += 1
 
         exit_frame = Frame(self.root)
-        exit_frame.grid(row=4, column=0, pady=20)
+        exit_frame.grid(row=5, column=0, pady=20)
         buttons = [
             [ 'Export', self.export ],
             [ 'OK', self.ok ]
@@ -335,7 +335,7 @@ class BookmarkWindow(object):
         col = 1
         for text, comm in buttons:
             b = Button(exit_frame, text = text, width = 10, command = comm)
-            b.grid(row=1, column = col, padx=10)
+            b.grid(row=0, column = col, padx=5)
             col += 1
 
 
