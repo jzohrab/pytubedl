@@ -246,12 +246,46 @@ class BookmarkWindow(object):
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark)
 
+        # Pre-calc graphing data.  If from_val or to_val change, must recalc.
+        self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
+
         # Start the clip at the bookmark value for now, good enough.
         clip_bounds = bookmark.clip_bounds_ms
         if not bookmark.clip_bounds_ms:
             clip_bounds = (bookmark.position_ms, bookmark.position_ms)
 
+        self.slider_var = DoubleVar()
+
+        slider_frame = Frame(self.root)
+        slider_frame.grid(row=1, column=0, pady=20)
+
+        # Slider length had to be eyeballed here, as the matplotlib
+        # size is specified in inches.  I wasn't sure how to align the
+        # sizes easily.
+        sllen = 5 * 60
+        self.slider = Scale(
+            slider_frame,
+            from_=self.from_val,
+            to=self.to_val,
+            showvalue = 0, # Hide label.
+            orient=HORIZONTAL,
+            sliderlength = 10,
+            variable = self.slider_var,
+            length= sllen)
+        self.slider.grid(row=1, column=0, pady=10)
+
+        self.slider_lbl = Label(slider_frame, text='')
+        self.slider_lbl.grid(row=2, column=0, pady=2)
+        def update_slider_label(a, b, c):
+            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
+        self.slider_var.trace('w', update_slider_label)
+
+        w = self.plot(slider_frame)
+        w.grid(row=3, column=0, pady=20)
+
+
         ctl_frame = Frame(self.root)
+        ctl_frame.grid(row=2, column=0, pady=20)
 
         def _control_row(row, lbl_text, btn_text, initial_value=None):
             # Need both width and anchor for text alignment to work.
@@ -304,40 +338,6 @@ class BookmarkWindow(object):
         self.export_btn.grid(row=7, column=2, padx=10)
         self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
         self.ok_btn.grid(row=8, column=2, padx=10)
-
-        ctl_frame.grid(row=1, column=0, pady=20)
-
-        # Pre-calc graphing data.  If from_val or to_val change, must recalc.
-        self.signal_plot_data = self.get_signal_plot_data(self.from_val, self.to_val)
-
-        slider_frame = Frame(self.root)
-        slider_frame.grid(row=2, column=0, pady=20)
-
-        self.slider_var = DoubleVar()
-        
-        # Slider length had to be eyeballed here, as the matplotlib
-        # size is specified in inches.  I wasn't sure how to align the
-        # sizes easily.
-        sllen = 5 * 60
-        self.slider = Scale(
-            slider_frame,
-            from_=self.from_val,
-            to=self.to_val,
-            showvalue = 0, # Hide label.
-            orient=HORIZONTAL,
-            sliderlength = 10,
-            variable = self.slider_var,
-            length= sllen)
-        self.slider.grid(row=1, column=0, pady=10)
-
-        self.slider_lbl = Label(slider_frame, text='')
-        self.slider_lbl.grid(row=2, column=0, pady=2)
-        def update_slider_label(a, b, c):
-            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
-        self.slider_var.trace('w', update_slider_label)
-
-        w = self.plot(slider_frame)
-        w.grid(row=3, column=0, pady=20)
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
