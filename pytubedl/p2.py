@@ -284,21 +284,17 @@ class BookmarkWindow(object):
         ctl_frame.grid(row=2, column=0, pady=20)
 
         def _control_row(row, lbl_text, btn_text, initial_value=None):
+            var = DoubleVar()
+
             # Need both width and anchor for text alignment to work.
             lbl = Label(ctl_frame, text=lbl_text, width=10, anchor='e')
             lbl.grid(row=row, column=1, pady=2)
 
-            var = DoubleVar()
-
-            e = Entry(ctl_frame, width=10, textvariable=var)
-            e.grid(row=row, column=2, padx=10)
-
-            time_lbl = Label(ctl_frame, text='', width=10, anchor='w')
-            time_lbl.grid(row=row, column=3, pady=2)
+            lbl = Label(ctl_frame, text='', width=10, anchor='w')
+            lbl.grid(row=row, column=2, pady=2)
             def update_time_label(a, b, c):
                 s = TimeUtils.time_string(var.get())
-                time_lbl.configure(text=f'({s})')
-
+                lbl.configure(text = s)
             var.trace('w', update_time_label)
             if initial_value:
                 var.set(initial_value)
@@ -307,7 +303,7 @@ class BookmarkWindow(object):
                 ctl_frame, text=btn_text, width=10,
                 command = lambda: var.set(float(self.slider_var.get()))
             )
-            btn.grid(row=row, column=4, padx=10)
+            btn.grid(row=row, column=3, padx=10)
 
             return (var, btn)
 
