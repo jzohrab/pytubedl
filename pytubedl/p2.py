@@ -259,19 +259,15 @@ class BookmarkWindow(object):
         slider_frame = Frame(self.root)
         slider_frame.grid(row=1, column=0, pady=20)
 
-        # Slider length had to be eyeballed here, as the matplotlib
-        # size is specified in inches.  I wasn't sure how to align the
-        # sizes easily.
-        sllen = 5 * 60
+        # Had to guess the best slider length, as I couldn't figure
+        # out how to calculate it exactly using the matplotlib figure
+        # dimensions.
+        length_eyeballed = 5 * 60
         self.slider = Scale(
-            slider_frame,
-            from_=self.from_val,
-            to=self.to_val,
-            showvalue = 0, # Hide label.
-            orient=HORIZONTAL,
-            sliderlength = 10,
-            variable = self.slider_var,
-            length= sllen)
+            slider_frame, orient = HORIZONTAL,
+            length = length_eyeballed, sliderlength = 10,
+            from_ = self.from_val, to = self.to_val, showvalue = 0,
+            variable = self.slider_var)
         self.slider.grid(row=1, column=0, pady=10)
 
         self.slider_lbl = Label(slider_frame, text='')
