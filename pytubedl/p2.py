@@ -265,6 +265,9 @@ class BookmarkWindow(object):
         slider_frame = Frame(self.root)
         slider_frame.grid(row=1, column=0, pady=20)
 
+        w = self.plot(slider_frame)
+        w.grid(row=0, column=0, pady=20)
+
         # Had to guess the best slider length, as I couldn't figure
         # out how to calculate it exactly using the matplotlib figure
         # dimensions.
@@ -276,14 +279,8 @@ class BookmarkWindow(object):
             variable = self.slider_var)
         self.slider.grid(row=1, column=0, pady=10)
 
-        slider_lbl = Label(slider_frame, text='')
-        slider_lbl.grid(row=2, column=0, pady=2)
-        def update_slider_label(a, b, c):
-            slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
-        self.slider_var.trace('w', update_slider_label)
-
-        w = self.plot(slider_frame)
-        w.grid(row=3, column=0, pady=20)
+        self.play_btn = Button(slider_frame, text='Play', width = 10, command=self.play_pause)
+        self.play_btn.grid(row=2, column=0)
 
 
         clip_frame = Frame(self.root)
@@ -331,18 +328,31 @@ class BookmarkWindow(object):
         # The play button is special, b/c we need to keep a handle on
         # it, but all the other buttons are just "data" so we can
         # create them in an array.
-        self.play_btn = Button(ctl_frame, text='Play', width = 10, command=self.play_pause)
-        self.play_btn.grid(row=0, column=0, padx=10)
 
         buttons = [
-            [ 1, 'Play clip', self.play_clip ],
-            [ 2, 'Transcribe', self.transcribe ],
-            [ 3, 'Export', self.export ],
-            [ 4, 'OK', self.ok ]
+            [ 'Set start', lambda: print() ],
+            [ 'Set end', lambda: print() ],
+            [ 'Play clip', self.play_clip ],
+            [ 'Transcribe', self.transcribe ]
         ]
-        for col, text, comm in buttons:
+        col = 1
+        for text, comm in buttons:
             b = Button(ctl_frame, text = text, width = 10, command = comm)
-            b.grid(row=0, column = col, padx=10)
+            b.grid(row=0, column = col, padx=5)
+            col += 1
+
+        exit_frame = Frame(self.root)
+        exit_frame.grid(row=4, column=0, pady=20)
+        buttons = [
+            [ 'Export', self.export ],
+            [ 'OK', self.ok ]
+        ]
+        col = 1
+        for text, comm in buttons:
+            b = Button(exit_frame, text = text, width = 10, command = comm)
+            b.grid(row=1, column = col, padx=10)
+            col += 1
+
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
