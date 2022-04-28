@@ -21,6 +21,7 @@ import requests
 from tempfile import NamedTemporaryFile
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
 
 from voskutils import transcribe_audiosegment, TranscriptionCallback
 import json
@@ -511,6 +512,10 @@ class BookmarkWindow(object):
         r = requests.post(url, json = postjson)
         print('posted')
         print(r.json())
+        e = r.json()['error']
+        if e is not None:
+            msg = f'Message from Anki/Ankiconnect: {e}'
+            messagebox.showerror(title='Anki export failed', message=msg)
 
     def play_pause(self):
         self.music_player.play_pause()
