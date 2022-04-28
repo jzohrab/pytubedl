@@ -320,11 +320,10 @@ class BookmarkWindow(object):
             [ 'Play clip', self.play_clip ],
             [ 'Transcribe', self.transcribe ]
         ]
-        col = 1
-        for text, comm in buttons:
+        for index, arr in enumerate(buttons, start=1):
+            text, comm = arr
             b = Button(ctl_frame, text = text, width = 10, command = comm)
-            b.grid(row=0, column = col, padx=5)
-            col += 1
+            b.grid(row=0, column = index, padx=5)
 
         exit_frame = Frame(self.root)
         exit_frame.grid(row=5, column=0, pady=20)
