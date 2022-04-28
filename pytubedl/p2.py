@@ -1,33 +1,5 @@
 #####
 # Clip player
-#
-#
-# MVP TODO (usable for me)
-# - export card and transcription to anki, hardcoded destination
-# - add "bookmark" button to main screen
-#
-# - "anki config" for exporting.
-# - popup: re-styling of form: graph at top, slider under that, buttons under that
-# - restyle main screen:
-#   - slider at top, then slider buttons, then bookmark list, then bk buttons
-# - can't change bookmark pos for <Full Track>"
-# - can't add "end clip" for <Full Track>
-# - export clipped mp3 file to disk
-# - better error handling for failed transcription model
-# - list hotkeys in README
-# - any other TODOs in the code.
-
-# Future TODOs:
-# - hotkey help - https://mail.python.org/pipermail/python-list/2003-April/229647.html
-# - configurable anki save destination
-# - "save" and "import" to load all bookmarks and stuff
-# - maybe "add note" to bookmark?
-# - clip editor popup:
-#   - add double slider https://github.com/MenxLi/tkSliderWidget?
-#   - respect double slider on playback
-#   - add buttons to reposition the start and end of the slider values, respecting max
-#   - resave/replace
-
 ###
 
 import numpy as np
