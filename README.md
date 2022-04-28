@@ -13,8 +13,9 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
-# - add "bookmark" button to main screen
 # - popup: re-styling of form: graph at top, slider under that, buttons under that
+# - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
+# - popup hotkeys
 # - restyle main screen:
 #   - slider at top, then slider buttons, then bookmark list, then bk buttons
 # - can't change bookmark pos for <Full Track>"
@@ -23,6 +24,14 @@ TODO list
 # - better error handling for failed transcription model
 # - list hotkeys in README
 # - any other TODOs in the code.
+# - remove dev hack
+# - remove 'q' quit shortcut on main
+# - move files to new repo
+# - minimal requirements.txt
+# - split classes to separate files
+# - fresh checkout, install, build from scratch in new venv
+
+# - packaging?
 
 # Future TODOs:
 # - hotkey help - https://mail.python.org/pipermail/python-list/2003-April/229647.html

@@ -787,16 +787,15 @@ class MainWindow:
         ctl_frame.grid(row=1, column=0, pady=20)
 
         def _make_button(text, column, command):
-            f = ('Times', 10)
-            b = Button(ctl_frame, text=text, width=10, font=f, command=command)
+            b = Button(ctl_frame, text=text, width=10, command=command)
             b.grid(row=0, column=column, padx=10)
             return b
 
         _make_button('Load', 1, self.load)
         self.play_btn = _make_button('Play', 2, self.play_pause)
-        self.del_btn =  _make_button('Delete', 3, self.delete_selected_bookmark)
-        self.clip_btn = _make_button('Clip', 4, self.popup_window)
-        _make_button('Quit', 5, self.quit)
+        _make_button('Bookmark', 3, self.add_bookmark)
+        _make_button('Delete', 4, self.delete_selected_bookmark)
+        _make_button('Clip', 5, self.popup_window)
 
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=2, column=0, pady=20)
@@ -857,8 +856,11 @@ class MainWindow:
             self.bookmarks_lst.activate(selected_index)
             self.bookmarks_lst.select_set(selected_index)
 
-    def add_bookmark(self, m):
-        b = MainWindow.Bookmark(m)
+    def add_bookmark(self, m = None):
+        v = m
+        if v is None:
+            v = float(self.slider.get())
+        b = MainWindow.Bookmark(v)
         self.bookmarks.append(b)
         self.bookmarks_lst.insert(END, b.display())
 
