@@ -299,6 +299,8 @@ class BookmarkWindow(object):
                 e = TimeUtils.time_string(e)
                 text = f'{s} - {e}'
             clip_interval_lbl.configure(text = text)
+        self.start_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
+        self.end_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
         update_clip_interval_lbl()
 
         self.transcription_var = StringVar()
@@ -312,13 +314,9 @@ class BookmarkWindow(object):
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=3, column=0, pady=20)
 
-        def update_clip_var(v):
-            v.set(self.slider.get())
-            update_clip_interval_lbl()
-
         buttons = [
-            [ 'Set start', lambda: update_clip_var(self.start_var) ],
-            [ 'Set end', lambda: update_clip_var(self.end_var) ],
+            [ 'Set start', lambda: self.start_var.set(self.slider_var.get()) ],
+            [ 'Set end', lambda: self.end_var.set(self.slider_var.get()) ],
             [ 'Play clip', self.play_clip ],
             [ 'Transcribe', self.transcribe ]
         ]
@@ -345,6 +343,17 @@ class BookmarkWindow(object):
         self.music_player.load_song(music_file, song_length_ms)
         self.music_player.reposition(clip_bounds[0])
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
+
+        self.root.bind('<Command-p>', lambda e: self.play_pause())
+        self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
+        self.root.bind('<Command-s>', lambda e: self.start_var.set(self.slider_var.get()))
+        self.root.bind('<Command-e>', lambda e: self.end_var.set(self.slider_var.get()))
+        self.root.bind('<Command-c>', lambda e: self.play_clip())
+        self.root.bind('<Command-t>', lambda e: self.transcribe())
+        self.root.bind('<Command-x>', lambda e: self.export())
+        self.root.bind('<Return>', lambda e: self.ok())
+        self.root.bind('<Right>', lambda e: self.music_player.increment(100))
+        self.root.bind('<Left>', lambda e: self.music_player.increment(-100))
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
