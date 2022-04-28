@@ -13,12 +13,8 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
-# - popup: re-styling of form:
-    - graph at top
-    - slider under that
-    - buttons under that
-# - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
 # - popup hotkeys
+# - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
 # - restyle main screen:
 #   - slider at top, then slider buttons, then bookmark list, then bk buttons
 # - can't change bookmark pos for <Full Track>"
