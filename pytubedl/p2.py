@@ -254,6 +254,12 @@ class BookmarkWindow(object):
         if not bookmark.clip_bounds_ms:
             clip_bounds = (bookmark.position_ms, bookmark.position_ms)
 
+        # TODO: can likely change these to regular floats, as they're
+        # not controlling anything.
+        self.entry_var = DoubleVar(value = bookmark.position_ms)
+        self.start_var = DoubleVar(value = clip_bounds[0])
+        self.end_var = DoubleVar(value = clip_bounds[1])
+
         self.slider_var = DoubleVar()
 
         slider_frame = Frame(self.root)
@@ -280,17 +286,17 @@ class BookmarkWindow(object):
         w.grid(row=3, column=0, pady=20)
 
 
-        ctl_frame = Frame(self.root)
-        ctl_frame.grid(row=2, column=0, pady=20)
+        clip_frame = Frame(self.root)
+        clip_frame.grid(row=2, column=0, pady=20)
 
         def _clip_btn(row, lbl_text, btn_text, initial_value=None):
             var = DoubleVar()
 
             # Need both width and anchor for text alignment to work.
-            lbl = Label(ctl_frame, text=lbl_text, width=10, anchor='e')
+            lbl = Label(clip_frame, text=lbl_text, width=10, anchor='e')
             lbl.grid(row=row, column=1, pady=2)
 
-            lbl = Label(ctl_frame, text='', width=10, anchor='w')
+            lbl = Label(clip_frame, text='', width=10, anchor='w')
             lbl.grid(row=row, column=2, pady=2)
             def update_time_label(a, b, c):
                 s = TimeUtils.time_string(var.get())
@@ -300,7 +306,7 @@ class BookmarkWindow(object):
                 var.set(initial_value)
 
             btn = Button(
-                ctl_frame, text=btn_text, width=10,
+                clip_frame, text=btn_text, width=10,
                 command = lambda: var.set(float(self.slider_var.get()))
             )
             btn.grid(row=row, column=3, padx=10)
@@ -314,25 +320,28 @@ class BookmarkWindow(object):
         self.transcription_var = StringVar()
         if (self.bookmark.transcription):
             self.transcription_var.set(self.bookmark.transcription)
-        text_lbl = Label(ctl_frame, text='Text', width=10, anchor='e')
+        text_lbl = Label(clip_frame, text='Text', width=10, anchor='e')
         text_lbl.grid(row=3, column=1, pady=2)
-        text_entry = Entry(ctl_frame, width=50, textvariable = self.transcription_var)
+        text_entry = Entry(clip_frame, width=50, textvariable = self.transcription_var)
         text_entry.grid(row=3, column=2, columnspan=3, padx=10, sticky=W+E)
+
+        ctl_frame = Frame(self.root)
+        ctl_frame.grid(row=3, column=0, pady=20)
 
         # The play button is special, b/c we need to keep a handle on
         # it, but all the other buttons are just "data" so we can
         # create them in an array.
         self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
-        self.play_btn.grid(row=4, column=2, padx=10)
+        self.play_btn.grid(row=0, column=1, padx=10)
 
         self.play_clip = Button(ctl_frame, text='Play clip', command=self.play_clip)
-        self.play_clip.grid(row=5, column=2, padx=10)
+        self.play_clip.grid(row=0, column=2, padx=10)
         self.transcribe_btn = Button(ctl_frame, text="Transcribe", command=self.transcribe)
-        self.transcribe_btn.grid(row=6, column=2, padx=10)
+        self.transcribe_btn.grid(row=0, column=3, padx=10)
         self.export_btn = Button(ctl_frame, text="Export", command=self.export)
-        self.export_btn.grid(row=7, column=2, padx=10)
+        self.export_btn.grid(row=0, column=4, padx=10)
         self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
-        self.ok_btn.grid(row=8, column=2, padx=10)
+        self.ok_btn.grid(row=0, column=5, padx=10)
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
