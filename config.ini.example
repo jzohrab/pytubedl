@@ -6,6 +6,6 @@ MediaFolder = /Users/jeff/Library/Application Support/Anki2/User 1/collection.me
 
 [AnkiCard]
 Deck = Spanish::03_Spanish_audio
-ModelName = Audio_Exposure
-AudioField = Front_Audio
-TranscriptionField = Front
+NoteType = Audio_clip
+AudioField = Audio
+TranscriptionField = Text

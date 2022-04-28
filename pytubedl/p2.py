@@ -501,7 +501,7 @@ class BookmarkWindow(object):
             "params": {
                 "note": {
                     "deckName": a['Deck'],
-                    "modelName": a['ModelName'],
+                    "modelName": a['NoteType'],
                     "fields": fields
                 }
             }
