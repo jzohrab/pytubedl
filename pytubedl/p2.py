@@ -235,8 +235,6 @@ class BookmarkWindow(object):
     """
 
     def __init__(self, parent, bookmark, music_file, song_length_ms):
-        # The "return value" of the dialog,
-        # entered by user in self.entry Entry box.
         self.bookmark = bookmark
         self.music_file = music_file
         self.song_length_ms = song_length_ms
@@ -279,7 +277,7 @@ class BookmarkWindow(object):
             btn = Button(ctl_frame, text=btn_text, width=10, command=lam)
             btn.grid(row=row, column=4, padx=10)
 
-            return (e, var, btn)
+            return (var, btn)
 
         def nz(a, b): return b if a is None else a
 
@@ -300,11 +298,11 @@ class BookmarkWindow(object):
         self.from_val = int(max(0, sl_min))
         self.to_val = int(min(self.song_length_ms, sl_max))
 
-        self.entry, self.entry_var, self.entry_btn = _control_row(
+        self.entry_var, self.entry_btn = _control_row(
             0, 'Bookmark', 'Update', bookmark.position_ms)
-        self.b_start, self.start_var, self.start_btn = _control_row(
+        self.start_var, self.start_btn = _control_row(
             1, 'Clip start', 'Update start', nz(clip_bounds[0], 0))
-        self.b_end, self.end_var, self.end_btn = _control_row(
+        self.end_var, self.end_btn = _control_row(
             2, 'Clip end', 'Update end', nz(clip_bounds[1], 0))
 
         self.transcription_var = StringVar()
@@ -528,8 +526,8 @@ class BookmarkWindow(object):
 
     def set_clip_bounds(self):
         try:
-            s = self.b_start.get()
-            e = self.b_end.get()
+            s = self.start_var.get()
+            e = self.end_var.get()
             valid_clip = (
                 s is not None and
                 s != '' and
@@ -539,11 +537,11 @@ class BookmarkWindow(object):
             if valid_clip:
                 self.bookmark.clip_bounds_ms = (float(s), float(e))
         except:
-            print(f'bad clip bounds? {(self.b_start.get(), self.b_end.get())}')
+            print(f'bad clip bounds? {(self.start_var.get(), self.end_var.get())}')
 
     def ok(self):
         self.root.grab_release()
-        self.bookmark.position_ms = float(self.entry.get())
+        self.bookmark.position_ms = float(self.entry_var.get())
         self.bookmark.transcription = self.transcription_var.get()
         self.set_clip_bounds()
         self.root.destroy()
