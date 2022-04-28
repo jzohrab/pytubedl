@@ -270,10 +270,10 @@ class BookmarkWindow(object):
             variable = self.slider_var)
         self.slider.grid(row=1, column=0, pady=10)
 
-        self.slider_lbl = Label(slider_frame, text='')
-        self.slider_lbl.grid(row=2, column=0, pady=2)
+        slider_lbl = Label(slider_frame, text='')
+        slider_lbl.grid(row=2, column=0, pady=2)
         def update_slider_label(a, b, c):
-            self.slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
+            slider_lbl.configure(text=TimeUtils.time_string(self.slider_var.get()))
         self.slider_var.trace('w', update_slider_label)
 
         w = self.plot(slider_frame)
@@ -303,8 +303,10 @@ class BookmarkWindow(object):
             if initial_value:
                 var.set(initial_value)
 
-            lam = lambda: var.set(float(self.slider.get()))
-            btn = Button(ctl_frame, text=btn_text, width=10, command=lam)
+            btn = Button(
+                ctl_frame, text=btn_text, width=10,
+                command = lambda: var.set(float(self.slider_var.get()))
+            )
             btn.grid(row=row, column=4, padx=10)
 
             return (var, btn)
