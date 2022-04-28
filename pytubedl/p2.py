@@ -242,7 +242,7 @@ class BookmarkWindow(object):
         self.parent = parent
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
-        self.root.geometry('500x400')
+        self.root.geometry('600x500')
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark)
 
@@ -282,56 +282,43 @@ class BookmarkWindow(object):
         self.play_btn = Button(slider_frame, text='Play', width = 10, command=self.play_pause)
         self.play_btn.grid(row=2, column=0)
 
+        clip_details_frame = Frame(self.root)
+        clip_details_frame.grid(row=2, column=0, pady=20)
 
-        clip_frame = Frame(self.root)
-        clip_frame.grid(row=2, column=0, pady=20)
+        lbl = Label(clip_details_frame, text='Clip', width=10, anchor='e')
+        lbl.grid(row=1, column=1, pady=2)
+        clip_interval_lbl = Label(clip_details_frame, text='-', anchor='e')
+        clip_interval_lbl.grid(row=1, column=2, pady=2)
 
-        def _clip_btn(row, lbl_text, btn_text, initial_value=None):
-            var = DoubleVar()
-
-            # Need both width and anchor for text alignment to work.
-            lbl = Label(clip_frame, text=lbl_text, width=10, anchor='e')
-            lbl.grid(row=row, column=1, pady=2)
-
-            lbl = Label(clip_frame, text='', width=10, anchor='w')
-            lbl.grid(row=row, column=2, pady=2)
-            def update_time_label(a, b, c):
-                s = TimeUtils.time_string(var.get())
-                lbl.configure(text = s)
-            var.trace('w', update_time_label)
-            if initial_value:
-                var.set(initial_value)
-
-            btn = Button(
-                clip_frame, text=btn_text, width=10,
-                command = lambda: var.set(float(self.slider_var.get()))
-            )
-            btn.grid(row=row, column=3, padx=10)
-
-            return var
-
-        self.entry_var = _clip_btn(0, 'Bookmark', 'Update', bookmark.position_ms)
-        self.start_var = _clip_btn(1, 'Clip start', 'Update start', clip_bounds[0])
-        self.end_var = _clip_btn(2, 'Clip end', 'Update end', clip_bounds[1])
+        def update_clip_interval_lbl():
+            s = self.start_var.get()
+            e = self.end_var.get()
+            text = '-'
+            if s <= e:
+                s = TimeUtils.time_string(s)
+                e = TimeUtils.time_string(e)
+                text = f'{s} - {e}'
+            clip_interval_lbl.configure(text = text)
+        update_clip_interval_lbl()
 
         self.transcription_var = StringVar()
         if (self.bookmark.transcription):
             self.transcription_var.set(self.bookmark.transcription)
-        text_lbl = Label(clip_frame, text='Text', width=10, anchor='e')
-        text_lbl.grid(row=3, column=1, pady=2)
-        text_entry = Entry(clip_frame, width=50, textvariable = self.transcription_var)
-        text_entry.grid(row=3, column=2, columnspan=3, padx=10, sticky=W+E)
+        lbl = Label(clip_details_frame, text='Text', width=10, anchor='e')
+        lbl.grid(row=2, column=1, pady=2)
+        text_entry = Entry(clip_details_frame, width=50, textvariable = self.transcription_var)
+        text_entry.grid(row=2, column=2, columnspan=3, padx=10, sticky=W+E)
 
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=3, column=0, pady=20)
 
-        # The play button is special, b/c we need to keep a handle on
-        # it, but all the other buttons are just "data" so we can
-        # create them in an array.
+        def update_clip_var(v):
+            v.set(self.slider.get())
+            update_clip_interval_lbl()
 
         buttons = [
-            [ 'Set start', lambda: print() ],
-            [ 'Set end', lambda: print() ],
+            [ 'Set start', lambda: update_clip_var(self.start_var) ],
+            [ 'Set end', lambda: update_clip_var(self.end_var) ],
             [ 'Play clip', self.play_clip ],
             [ 'Transcribe', self.transcribe ]
         ]
