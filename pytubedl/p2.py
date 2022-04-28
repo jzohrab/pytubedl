@@ -331,17 +331,18 @@ class BookmarkWindow(object):
         # The play button is special, b/c we need to keep a handle on
         # it, but all the other buttons are just "data" so we can
         # create them in an array.
-        self.play_btn = Button(ctl_frame, text='Play', command=self.play_pause)
-        self.play_btn.grid(row=0, column=1, padx=10)
+        self.play_btn = Button(ctl_frame, text='Play', width = 10, command=self.play_pause)
+        self.play_btn.grid(row=0, column=0, padx=10)
 
-        self.play_clip = Button(ctl_frame, text='Play clip', command=self.play_clip)
-        self.play_clip.grid(row=0, column=2, padx=10)
-        self.transcribe_btn = Button(ctl_frame, text="Transcribe", command=self.transcribe)
-        self.transcribe_btn.grid(row=0, column=3, padx=10)
-        self.export_btn = Button(ctl_frame, text="Export", command=self.export)
-        self.export_btn.grid(row=0, column=4, padx=10)
-        self.ok_btn = Button(ctl_frame, text="OK", command=self.ok)
-        self.ok_btn.grid(row=0, column=5, padx=10)
+        buttons = [
+            [ 1, 'Play clip', self.play_clip ],
+            [ 2, 'Transcribe', self.transcribe ],
+            [ 3, 'Export', self.export ],
+            [ 4, 'OK', self.ok ]
+        ]
+        for col, text, comm in buttons:
+            b = Button(ctl_frame, text = text, width = 10, command = comm)
+            b.grid(row=0, column = col, padx=10)
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
         self.music_player.load_song(music_file, song_length_ms)
