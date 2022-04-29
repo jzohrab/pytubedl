@@ -314,6 +314,9 @@ class BookmarkWindow(object):
         self.transcription_textbox = Text(clip_details_frame, height = 5, width = 60, wrap=WORD, borderwidth=1, relief='solid')
         self.transcription_textbox.grid(row=3, column = 2)
 
+        if (self.bookmark.transcription):
+            self.transcription_textbox.insert(1.0, self.bookmark.transcription)
+
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=3, column=0, pady=20)
 
@@ -567,7 +570,7 @@ class BookmarkWindow(object):
     def ok(self):
         self.root.grab_release()
         self.bookmark.position_ms = float(self.entry_var.get())
-        self.bookmark.transcription = self.transcription_var.get()
+        self.bookmark.transcription = self.transcription_textbox.get(1.0, END)
         self.set_clip_bounds()
         self.root.destroy()
 
