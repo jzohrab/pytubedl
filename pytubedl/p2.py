@@ -331,11 +331,10 @@ class BookmarkWindow(object):
             [ 'Export', self.export ],
             [ 'OK', self.ok ]
         ]
-        col = 1
-        for text, comm in buttons:
+        for index, arr in enumerate(buttons, start=1):
+            text, comm = arr
             b = Button(exit_frame, text = text, width = 10, command = comm)
-            b.grid(row=0, column = col, padx=5)
-            col += 1
+            b.grid(row=0, column = index, padx=5)
 
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
@@ -343,6 +342,11 @@ class BookmarkWindow(object):
         self.music_player.reposition(clip_bounds[0])
         # print(f'VALS: from={from_val}, to={to_val}, val={bookmark.position_ms}')
 
+        # Hotkeys.  Note: I tried to bind the hotkeys in the "for
+        # index, arr" loops above (since I'm just repeating the
+        # commands already given in the arrays), but when I did so the
+        # lambdas did not work ... they just closed the form.  Code in
+        # loop was"self.root.bind(f'<{hotkey}>', lambda e: comm())".
         self.root.bind('<Command-p>', lambda e: self.play_pause())
         self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
         self.root.bind('<Command-s>', lambda e: self.start_var.set(self.slider_var.get()))
