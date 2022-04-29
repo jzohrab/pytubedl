@@ -250,7 +250,7 @@ class BookmarkWindow(object):
         self.parent = parent
         self.root=Toplevel(parent)
         self.root.protocol('WM_DELETE_WINDOW', self.ok)
-        self.root.geometry('600x500')
+        self.root.geometry('550x450')
 
         self.from_val, self.to_val = self.get_slider_from_to(bookmark)
 
@@ -273,13 +273,13 @@ class BookmarkWindow(object):
         slider_frame = Frame(self.root)
         slider_frame.grid(row=1, column=0, pady=10)
 
-        w = self.plot(slider_frame)
+        w = self.plot(slider_frame, 7)
         w.grid(row=0, column=0, pady=10)
 
         # Had to guess the best slider length, as I couldn't figure
         # out how to calculate it exactly using the matplotlib figure
         # dimensions.
-        length_eyeballed = 5 * 60
+        length_eyeballed = 7 * 55
         self.slider = Scale(
             slider_frame, orient = HORIZONTAL,
             length = length_eyeballed, sliderlength = 10,
@@ -615,11 +615,11 @@ class BookmarkWindow(object):
         )
         return (time, signal)
 
-    def plot(self, frame):
+    def plot(self, frame, width_inches):
         """Draws plot, returns widget for subsequent placement."""
 
         fig, plot1 = plt.subplots()
-        fig.set_size_inches(5, 1)
+        fig.set_size_inches(width_inches, 1)
 
         # https://stackoverflow.com/questions/40325321/
         #  python-embed-a-matplotlib-plot-with-slider-in-tkinter-properly
