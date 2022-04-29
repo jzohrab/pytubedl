@@ -808,7 +808,7 @@ class MainWindow:
         self.play_btn = _make_button('Play', 2, self.play_pause)
         _make_button('Bookmark', 3, self.add_bookmark)
         _make_button('Delete', 4, self.delete_selected_bookmark)
-        _make_button('Clip', 5, self.popup_window)
+        _make_button('Clip', 5, self.popup_clip_window)
 
         slider_frame = Frame(master_frame)
         slider_frame.grid(row=2, column=0, pady=20)
@@ -843,9 +843,9 @@ class MainWindow:
         self.add_bookmark(3200)
         self.bookmarks_lst.activate(1)
         self.bookmarks_lst.select_set(1)
-        self.popup_window()
+        self.popup_clip_window()
 
-    def popup_window(self):
+    def popup_clip_window(self):
         i = self._selected_bookmark_index()
         if not i:
             return
@@ -911,13 +911,7 @@ class MainWindow:
 
     def handle_key(self, event):
         k = event.keysym
-        if k == 'q':
-            self.quit()
-        elif k == 'm':
-            self.add_bookmark(float(self.slider.get()))
-        elif k == 'd':
-            self.delete_selected_bookmark()
-        elif k == 'p':
+        if k == 'p':
             # Previously, I had 'space' handle start/stop, but that
             # also triggers a re-selection of the currently selected
             # bookmark.
@@ -926,9 +920,14 @@ class MainWindow:
             self.music_player.increment(-100)
         elif k == 'Right':
             self.music_player.increment(100)
+        elif k == 'm':
+            self.add_bookmark(float(self.slider.get()))
         elif k == 'u':
             self.update_selected_bookmark(float(self.slider.get()))
-        # 'plus', 'Return', etc.
+        elif k == 'Return':
+            self.popup_clip_window()
+        elif k == 'd':
+            self.delete_selected_bookmark()
 
     def load(self):
         f = filedialog.askopenfilename()
