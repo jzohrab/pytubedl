@@ -311,6 +311,9 @@ class BookmarkWindow(object):
         text_entry = Entry(clip_details_frame, width=50, textvariable = self.transcription_var)
         text_entry.grid(row=2, column=2, columnspan=3, padx=10, sticky=W+E)
 
+        self.transcription_textbox = Text(clip_details_frame, height = 5, width = 60, wrap=WORD, borderwidth=1, relief='solid')
+        self.transcription_textbox.grid(row=3, column = 2)
+
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=3, column=0, pady=20)
 
@@ -402,7 +405,7 @@ class BookmarkWindow(object):
 
     class StringVarCallback(TranscriptionCallback):
 
-        def __init__(self, rootwindow, entry_var):
+        def __init__(self, rootwindow, entry_var, txt):
             super()
             self._totalbytes = 100
             self._bytesread = 0
@@ -416,6 +419,8 @@ class BookmarkWindow(object):
             # is returned as a 'result', or a 'final result'.
             self.sentences = []
             self.entry_var = entry_var
+
+            self.transcription_textbox = txt
 
             # Handle to main window to force updates.
             # Hacky, really this should be moved to a thread or subprocess.
@@ -443,6 +448,11 @@ class BookmarkWindow(object):
             print()
             print(f'{self._pct}%: {self.transcription()}')
             self.entry_var.set(self.transcription())
+
+            t = self.transcription_textbox
+            t.delete(1.0, END)  # Weird that it's 1.0 ... ref stackoverflow question 27966626.
+            t.insert(1.0, self.transcription())
+
             self.rootwindow.update() # Update the UI, since this is blocking the main thread.
 
         def partial_result(self, r):
@@ -465,7 +475,7 @@ class BookmarkWindow(object):
         c = self.get_clip()
         if c is None:
             return
-        cb = BookmarkWindow.StringVarCallback(self.parent, self.transcription_var)
+        cb = BookmarkWindow.StringVarCallback(self.parent, self.transcription_var, self.transcription_textbox)
         transcribe_audiosegment(c, cb)
 
 
