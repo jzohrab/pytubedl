@@ -13,21 +13,11 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
-# - restyle main screen:
-#   slider at top
-#   then slider buttons
-#   then bookmark list
-#   then bk buttons ?
-# - can't change bookmark pos for <Full Track>"
-# - can't add "end clip" for <Full Track>
-# - better error handling for failed transcription model
-# - any other TODOs in the code.
-# - remove dev hack
-# - remove 'q' quit shortcut on main
-# - move files to new repo
-# - minimal requirements.txt
 # - load button to menu
 # - remove all other menu things
+# - single file (and vosk) to fresh repo
+# - move and fix readme
+# - minimal requirements.txt to get it to run
 # - split classes to separate files
 # - fresh checkout, install, build from scratch in new venv
 

@@ -857,12 +857,12 @@ class MainWindow:
         window.bind('<d>', lambda e: self.delete_selected_bookmark())
         window.bind('<Return>', lambda e: self.popup_clip_window())
 
-        # during testing
-        print("TEST HACK LOAD SONG")
-        self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
-        self.hack_dev()
+        # self.hack_dev()
 
     def hack_dev(self):
+        """During dev."""
+        print("Hack load song and bookmark")
+        self._load_song_details('/Users/jeff/Documents/Projects/pytubedl/sample/ten_seconds.mp3')
         self.add_bookmark(3200)
         self.bookmarks_lst.activate(1)
         self.bookmarks_lst.select_set(1)
