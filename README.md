@@ -13,6 +13,22 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
+# - strip carriage returns in the json export of the transcription (from textbox)
+# - play clip using the regular player, so can stop it if you want, and see updates.
+# - on play clip, if transcription is not there, add it.
+# - play clip on separate thread
+# - transcribe on separate thread
+# - When "Clip mm:ss - mm:ss" present, on click of time go to that time.  then can adjust easily
+# - clicking "transcribe" re-transcribes existing
+# - "export" also closes the form.
+# - need some kind of status update on export, "success" or similar.
+# - if exporting on thread, then gui update shouldn't cause seg fault.
+# - save the exported date with the clip
+# - if already exported, ask if want to re-export
+# - on exit bookmark form, ensure that the selected bookmark is still visible in list
+# - say "are you sure?" message if clip has been defined and transcribed
+# - add "export all" button on main form?
+# - change title.
 # - load button to menu
 # - remove all other menu things
 # - single file (and vosk) to fresh repo
