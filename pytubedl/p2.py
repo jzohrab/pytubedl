@@ -36,6 +36,14 @@ class TimeUtils:
         secs = total_seconds % 60
         return '{:02d}:{:04.1f}'.format(mins, secs)
 
+    @staticmethod
+    def interval_string(s, e, ifInvalid = 'n/a'):
+        if (s >= e):
+            return ifInvalid
+        ss = TimeUtils.time_string(s)
+        es = TimeUtils.time_string(e)
+        return f'{ss} - {es}'
+
 
 class MusicPlayer:
     """Actually plays music, with slider."""
@@ -285,37 +293,25 @@ class BookmarkWindow(object):
         clip_details_frame = Frame(self.root)
         clip_details_frame.grid(row=2, column=0, pady=20)
 
-        lbl = Label(clip_details_frame, text='Clip', width=10, anchor='e')
-        lbl.grid(row=1, column=1, pady=2)
-        clip_interval_lbl = Label(clip_details_frame, text='-', anchor='e')
-        clip_interval_lbl.grid(row=1, column=2, pady=2)
+        clip_interval_lbl = Label(clip_details_frame, text='-')
 
         def update_clip_interval_lbl():
             s = self.start_var.get()
             e = self.end_var.get()
-            text = '-'
-            if s <= e:
-                s = TimeUtils.time_string(s)
-                e = TimeUtils.time_string(e)
-                text = f'{s} - {e}'
-            clip_interval_lbl.configure(text = text)
+            text = TimeUtils.interval_string(s, e, 'n/a')
+            clip_interval_lbl.configure(text = f'Clip: {text}')
         self.start_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
         self.end_var.trace('w', lambda a,b,c: update_clip_interval_lbl())
         update_clip_interval_lbl()
 
-        self.transcription_var = StringVar()
-        if (self.bookmark.transcription):
-            self.transcription_var.set(self.bookmark.transcription)
-        lbl = Label(clip_details_frame, text='Text', width=10, anchor='e')
-        lbl.grid(row=2, column=1, pady=2)
-        text_entry = Entry(clip_details_frame, width=50, textvariable = self.transcription_var)
-        text_entry.grid(row=2, column=2, columnspan=3, padx=10, sticky=W+E)
-
-        self.transcription_textbox = Text(clip_details_frame, height = 5, width = 60, wrap=WORD, borderwidth=1, relief='solid')
-        self.transcription_textbox.grid(row=3, column = 2)
-
+        self.transcription_textbox = Text(
+            clip_details_frame,
+            height = 5, width = 60, wrap=WORD, borderwidth=1) # relief='solid'
         if (self.bookmark.transcription):
             self.transcription_textbox.insert(1.0, self.bookmark.transcription)
+
+        clip_interval_lbl.grid(row=0, column=1, pady=2, sticky = W)
+        self.transcription_textbox.grid(row=1, column = 1)
 
         ctl_frame = Frame(self.root)
         ctl_frame.grid(row=3, column=0, pady=20)
@@ -406,9 +402,9 @@ class BookmarkWindow(object):
         playback.play(c)
 
 
-    class StringVarCallback(TranscriptionCallback):
+    class TextCallback(TranscriptionCallback):
 
-        def __init__(self, rootwindow, entry_var, txt):
+        def __init__(self, rootwindow, textbox):
             super()
             self._totalbytes = 100
             self._bytesread = 0
@@ -421,9 +417,8 @@ class BookmarkWindow(object):
             # each individual sentence (as best as Vosk can determine)
             # is returned as a 'result', or a 'final result'.
             self.sentences = []
-            self.entry_var = entry_var
 
-            self.transcription_textbox = txt
+            self.transcription_textbox = textbox
 
             # Handle to main window to force updates.
             # Hacky, really this should be moved to a thread or subprocess.
@@ -450,7 +445,6 @@ class BookmarkWindow(object):
         def alert_update(self):
             print()
             print(f'{self._pct}%: {self.transcription()}')
-            self.entry_var.set(self.transcription())
 
             t = self.transcription_textbox
             t.delete(1.0, END)  # Weird that it's 1.0 ... ref stackoverflow question 27966626.
@@ -478,12 +472,36 @@ class BookmarkWindow(object):
         c = self.get_clip()
         if c is None:
             return
-        cb = BookmarkWindow.StringVarCallback(self.parent, self.transcription_var, self.transcription_textbox)
+        cb = BookmarkWindow.TextCallback(self.parent, self.transcription_textbox)
         transcribe_audiosegment(c, cb)
 
 
+    def set_clip_bounds(self):
+        try:
+            s = self.start_var.get()
+            e = self.end_var.get()
+            valid_clip = (
+                s is not None and
+                s != '' and
+                e is not None and
+                e != '' and
+                float(s) < float(e))
+            if valid_clip:
+                self.bookmark.clip_bounds_ms = (float(s), float(e))
+        except:
+            print(f'bad clip bounds? {(self.start_var.get(), self.end_var.get())}')
+
+
+    def save_clip(self):
+        self.bookmark.position_ms = float(self.entry_var.get())
+        self.bookmark.transcription = self.transcription_textbox.get(1.0, END)
+        self.set_clip_bounds()
+
     def export(self):
         """Export the current clip and transcription to Anki using Ankiconnect."""
+
+        self.save_clip()
+
         print('export')
         c = self.get_clip()
         if c is None:
@@ -516,7 +534,7 @@ class BookmarkWindow(object):
             a['AudioField']: f'[sound:{filename}]'
         }
 
-        t = self.transcription_var.get()
+        t = self.bookmark.transcription
         if t is not None and t != '':
             fields[ a['TranscriptionField'] ] = t
 
@@ -552,26 +570,9 @@ class BookmarkWindow(object):
             txt = 'Pause'
         self.play_btn.configure(text = txt)
 
-    def set_clip_bounds(self):
-        try:
-            s = self.start_var.get()
-            e = self.end_var.get()
-            valid_clip = (
-                s is not None and
-                s != '' and
-                e is not None and
-                e != '' and
-                float(s) < float(e))
-            if valid_clip:
-                self.bookmark.clip_bounds_ms = (float(s), float(e))
-        except:
-            print(f'bad clip bounds? {(self.start_var.get(), self.end_var.get())}')
-
     def ok(self):
+        self.save_clip()
         self.root.grab_release()
-        self.bookmark.position_ms = float(self.entry_var.get())
-        self.bookmark.transcription = self.transcription_textbox.get(1.0, END)
-        self.set_clip_bounds()
         self.root.destroy()
 
     _full_audio_segment = None
