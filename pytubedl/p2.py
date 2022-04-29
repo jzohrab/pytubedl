@@ -287,6 +287,23 @@ class BookmarkWindow(object):
             variable = self.slider_var)
         self.slider.grid(row=1, column=0, pady=5)
 
+        ctl_frame = Frame(self.root)
+        ctl_frame.grid(row=2, column=0, pady=10)
+
+        self.play_btn = Button(ctl_frame, text='Play', width = 8, command=self.play_pause)
+        self.play_btn.grid(row=0, column=0, padx=2)
+
+        buttons = [
+            [ 'Set start', lambda: self.start_var.set(self.slider_var.get()) ],
+            [ 'Set end', lambda: self.end_var.set(self.slider_var.get()) ],
+            [ 'Play clip', self.play_clip ],
+            [ 'Transcribe', self.transcribe ]
+        ]
+        for index, arr in enumerate(buttons, start=2):
+            text, comm = arr
+            b = Button(ctl_frame, text = text, width = 8, command = comm)
+            b.grid(row=0, column = index, padx=2)
+
         clip_details_frame = Frame(self.root)
         clip_details_frame.grid(row=3, column=0, pady=10)
 
@@ -309,23 +326,6 @@ class BookmarkWindow(object):
 
         clip_interval_lbl.grid(row=0, column=1, pady=2, sticky = W)
         self.transcription_textbox.grid(row=1, column = 1)
-
-        ctl_frame = Frame(self.root)
-        ctl_frame.grid(row=2, column=0, pady=10)
-
-        self.play_btn = Button(ctl_frame, text='Play', width = 8, command=self.play_pause)
-        self.play_btn.grid(row=0, column=0, padx=2)
-
-        buttons = [
-            [ 'Set start', lambda: self.start_var.set(self.slider_var.get()) ],
-            [ 'Set end', lambda: self.end_var.set(self.slider_var.get()) ],
-            [ 'Play clip', self.play_clip ],
-            [ 'Transcribe', self.transcribe ]
-        ]
-        for index, arr in enumerate(buttons, start=2):
-            text, comm = arr
-            b = Button(ctl_frame, text = text, width = 8, command = comm)
-            b.grid(row=0, column = index, padx=2)
 
         exit_frame = Frame(self.root)
         exit_frame.grid(row=5, column=0, pady=20)
