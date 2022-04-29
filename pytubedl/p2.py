@@ -271,10 +271,10 @@ class BookmarkWindow(object):
         self.slider_var = DoubleVar()
 
         slider_frame = Frame(self.root)
-        slider_frame.grid(row=1, column=0, pady=20)
+        slider_frame.grid(row=1, column=0, pady=10)
 
         w = self.plot(slider_frame)
-        w.grid(row=0, column=0, pady=20)
+        w.grid(row=0, column=0, pady=10)
 
         # Had to guess the best slider length, as I couldn't figure
         # out how to calculate it exactly using the matplotlib figure
@@ -285,13 +285,13 @@ class BookmarkWindow(object):
             length = length_eyeballed, sliderlength = 10,
             from_ = self.from_val, to = self.to_val, showvalue = 0,
             variable = self.slider_var)
-        self.slider.grid(row=1, column=0, pady=10)
+        self.slider.grid(row=1, column=0, pady=5)
 
         self.play_btn = Button(slider_frame, text='Play', width = 10, command=self.play_pause)
-        self.play_btn.grid(row=2, column=0)
+        self.play_btn.grid(row=2, column=0, pady=5)
 
         clip_details_frame = Frame(self.root)
-        clip_details_frame.grid(row=2, column=0, pady=20)
+        clip_details_frame.grid(row=2, column=0, pady=10)
 
         clip_interval_lbl = Label(clip_details_frame, text='-')
 
@@ -314,7 +314,7 @@ class BookmarkWindow(object):
         self.transcription_textbox.grid(row=1, column = 1)
 
         ctl_frame = Frame(self.root)
-        ctl_frame.grid(row=3, column=0, pady=20)
+        ctl_frame.grid(row=3, column=0, pady=10)
 
         buttons = [
             [ 'Set start', lambda: self.start_var.set(self.slider_var.get()) ],
