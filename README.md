@@ -19,7 +19,6 @@ TODO list
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
 # - better error handling for failed transcription model
-# - list hotkeys in README
 # - any other TODOs in the code.
 # - remove dev hack
 # - remove 'q' quit shortcut on main
