@@ -304,7 +304,7 @@ class BookmarkWindow(object):
             b = Button(ctl_frame, text = text, width = 8, command = comm)
             b.grid(row=0, column = index, padx=2)
 
-        clip_details_frame = Frame(self.root)
+        clip_details_frame = Frame(self.root, borderwidth=1, relief='groove')
         clip_details_frame.grid(row=3, column=0, pady=10)
 
         clip_interval_lbl = Label(clip_details_frame, text='-')
