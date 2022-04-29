@@ -13,9 +13,11 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
-# - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
 # - restyle main screen:
-#   - slider at top, then slider buttons, then bookmark list, then bk buttons
+#   slider at top
+#   then slider buttons
+#   then bookmark list
+#   then bk buttons ?
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
 # - better error handling for failed transcription model
@@ -24,22 +26,27 @@ TODO list
 # - remove 'q' quit shortcut on main
 # - move files to new repo
 # - minimal requirements.txt
+# - load button to menu
+# - remove all other menu things
 # - split classes to separate files
 # - fresh checkout, install, build from scratch in new venv
 
+
+# After MVP, possible pre-release
+
+# - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
+# - save and import to load all bookmarks, current position
 # - packaging?
+
 
 # Future TODOs:
 # - hotkey help - https://mail.python.org/pipermail/python-list/2003-April/229647.html
-# - configurable anki save destination
-# - "save" and "import" to load all bookmarks and stuff
 # - maybe "add note" to bookmark?
 # - export clipped mp3 file to disk ?
 # - clip editor popup:
 #   - add double slider https://github.com/MenxLi/tkSliderWidget?
 #   - respect double slider on playback
-#   - add buttons to reposition the start and end of the slider values, respecting max
-#   - resave/replace
+#   - add buttons to reposition the start and end of the slider values, respecting max, re-graph
 ```
 
 ## Hotkeys

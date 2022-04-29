@@ -790,10 +790,10 @@ class MainWindow:
 
         # Layout
         master_frame = Frame(window)
-        master_frame.pack(pady=20)
+        master_frame.grid(row=0, column=0, padx=50, pady=50)
 
         bk_frame = Frame(master_frame)
-        bk_frame.grid(row=0, column=0, pady=20)
+        bk_frame.grid(row=2, column=0, pady=10)
 
         # The bookmarks saved during play.
         self.bookmarks = []
@@ -811,11 +811,11 @@ class MainWindow:
         scrollbar.config(command= self.bookmarks_lst.yview)
 
         ctl_frame = Frame(master_frame)
-        ctl_frame.grid(row=1, column=0, pady=20)
+        ctl_frame.grid(row=1, column=0, pady=10)
 
         def _make_button(text, column, command):
-            b = Button(ctl_frame, text=text, width=10, command=command)
-            b.grid(row=0, column=column, padx=10)
+            b = Button(ctl_frame, text=text, width=8, command=command)
+            b.grid(row=0, column=column, padx=5)
             return b
 
         _make_button('Load', 1, self.load)
@@ -825,7 +825,7 @@ class MainWindow:
         _make_button('Clip', 5, self.popup_clip_window)
 
         slider_frame = Frame(master_frame)
-        slider_frame.grid(row=2, column=0, pady=20)
+        slider_frame.grid(row=0, column=0, pady=5)
 
         self.slider_var = DoubleVar()
 
@@ -836,7 +836,7 @@ class MainWindow:
             orient=HORIZONTAL,
             variable = self.slider_var,
             length=360)
-        self.slider.grid(row=0, column=1, pady=10)
+        self.slider.grid(row=0, column=1, pady=0)
 
         self.slider_lbl = Label(slider_frame, text='')
         self.slider_lbl.grid(row=1, column=1, pady=2)
