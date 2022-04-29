@@ -348,6 +348,8 @@ class BookmarkWindow(object):
         # lambdas did not work ... they just closed the form.  Code in
         # loop was"self.root.bind(f'<{hotkey}>', lambda e: comm())".
         self.root.bind('<Command-p>', lambda e: self.play_pause())
+        self.root.bind('<Right>', lambda e: self.music_player.increment(100))
+        self.root.bind('<Left>', lambda e: self.music_player.increment(-100))
         self.root.bind('<Command-r>', lambda e: self.music_player.reposition(self.from_val))
         self.root.bind('<Command-s>', lambda e: self.start_var.set(self.slider_var.get()))
         self.root.bind('<Command-e>', lambda e: self.end_var.set(self.slider_var.get()))
@@ -355,8 +357,6 @@ class BookmarkWindow(object):
         self.root.bind('<Command-t>', lambda e: self.transcribe())
         self.root.bind('<Command-x>', lambda e: self.export())
         self.root.bind('<Return>', lambda e: self.ok())
-        self.root.bind('<Right>', lambda e: self.music_player.increment(100))
-        self.root.bind('<Left>', lambda e: self.music_player.increment(-100))
 
         # Modal window.
         # Wait for visibility or grab_set doesn't seem to work.
@@ -831,8 +831,17 @@ class MainWindow:
         self.slider_var.trace('w', update_slider_label)
 
         self.music_player = MusicPlayer(self.slider, self.update_play_button_text)
-    
-        window.bind('<Key>', self.handle_key)
+
+        # Previously, I had 'space' handle start/stop, but that
+        # also triggers a re-selection of the currently selected
+        # bookmark.
+        window.bind('<Command-p>', lambda e: self.play_pause())
+        window.bind('<Right>', lambda e: self.music_player.increment(100))
+        window.bind('<Left>', lambda e: self.music_player.increment(-100))
+        window.bind('<m>', lambda e: self.add_bookmark(float(self.slider.get())))
+        window.bind('<u>', lambda e: self.update_selected_bookmark(float(self.slider.get())))
+        window.bind('<d>', lambda e: self.delete_selected_bookmark())
+        window.bind('<Return>', lambda e: self.popup_clip_window())
 
         # during testing
         print("TEST HACK LOAD SONG")
@@ -909,25 +918,6 @@ class MainWindow:
     def move_to_bookmark(self, b):
         self.music_player.reposition(b.position_ms)
 
-    def handle_key(self, event):
-        k = event.keysym
-        if k == 'p':
-            # Previously, I had 'space' handle start/stop, but that
-            # also triggers a re-selection of the currently selected
-            # bookmark.
-            self.play_pause()
-        elif k == 'Left':
-            self.music_player.increment(-100)
-        elif k == 'Right':
-            self.music_player.increment(100)
-        elif k == 'm':
-            self.add_bookmark(float(self.slider.get()))
-        elif k == 'u':
-            self.update_selected_bookmark(float(self.slider.get()))
-        elif k == 'Return':
-            self.popup_clip_window()
-        elif k == 'd':
-            self.delete_selected_bookmark()
 
     def load(self):
         f = filedialog.askopenfilename()

@@ -13,13 +13,11 @@ TODO list
 ```
 # MVP TODO (usable for me)
 
-# - popup hotkeys
 # - popup: "status label" for feedback - export start/stop, transcribe fail, transcribe done
 # - restyle main screen:
 #   - slider at top, then slider buttons, then bookmark list, then bk buttons
 # - can't change bookmark pos for <Full Track>"
 # - can't add "end clip" for <Full Track>
-# - export clipped mp3 file to disk
 # - better error handling for failed transcription model
 # - list hotkeys in README
 # - any other TODOs in the code.
@@ -37,12 +35,44 @@ TODO list
 # - configurable anki save destination
 # - "save" and "import" to load all bookmarks and stuff
 # - maybe "add note" to bookmark?
+# - export clipped mp3 file to disk ?
 # - clip editor popup:
 #   - add double slider https://github.com/MenxLi/tkSliderWidget?
 #   - respect double slider on playback
 #   - add buttons to reposition the start and end of the slider values, respecting max
 #   - resave/replace
 ```
+
+## Hotkeys
+
+### Main window
+
+* `<Command-p>'`: Play/pause
+* `<Right>`: Advance slider 100ms
+* `<Left>`: Move slider back 100ms
+
+* `<m>`: Add bookmark
+* `<u>`: Update selected bookmark to slider position
+* `<d>`: Delete selected bookmark
+* `<Up>`: Select previous bookmark
+* `<Down>`: Select next bookmark
+
+* `<Return>`: Popup clip window for selected bookmark
+
+### Clip editor popup
+
+* `<Command-p>`: Play/pause clip
+* `<Right>`: Advance slider 100ms
+* `<Left>`: Move slider back 100ms
+* `<Command-r>`: Reset the slider to 0
+
+* `<Command-s>`: Set the clip start
+* `<Command-e>`: Set the clip end
+* `<Command-c>`: Play clip
+* `<Command-t>`: Transcribe clip
+
+* `<Command-x>`: Export clip and transcription to Anki
+* `<Return>`: Close (and save) clip
 
 
 # Python backchainer
